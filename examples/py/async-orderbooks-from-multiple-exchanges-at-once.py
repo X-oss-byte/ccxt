@@ -8,7 +8,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 symbol = 'ETH/BTC'
 
@@ -21,7 +21,7 @@ def sync_client(exchange_id):
         market = exchange.market(symbol)
         orderbook = exchange.fetch_order_book(market['symbol'])
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     return { 'exchange': exchange.id, 'orderbook': orderbook }
 
 
@@ -33,15 +33,14 @@ async def async_client(exchange_id):
         market = exchange.market(symbol)
         orderbook = await exchange.fetch_order_book(market['symbol'])
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     await exchange.close()
     return { 'exchange': exchange.id, 'orderbook': orderbook }
 
 
 async def multi_orderbooks(exchanges):
     input_coroutines = [async_client(exchange) for exchange in exchanges]
-    orderbooks = await asyncio.gather(*input_coroutines, return_exceptions=True)
-    return orderbooks
+    return await asyncio.gather(*input_coroutines, return_exceptions=True)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from random import randint
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -32,8 +32,8 @@ try:
         market = markets[key]
         if market['future']:
             futures.append(market)
-    
-    if len(futures) > 0:
+
+    if futures:
         market = futures[0]
         symbol = market['symbol'] # example: BTC/USDT:USDT-220318
         type = 'market'
@@ -49,4 +49,4 @@ try:
         print(open_orders)
 
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)

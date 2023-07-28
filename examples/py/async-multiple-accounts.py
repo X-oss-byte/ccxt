@@ -5,7 +5,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -13,7 +13,7 @@ import ccxt.async_support as ccxt  # noqa: E402
 async def fetch_balance_n_times(code, account, n):
     exchange_class = getattr(ccxt, account['exchange_id'])
     exchange = exchange_class(account['params'])
-    for i in range(0, n):
+    for _ in range(0, n):
         balance = await exchange.fetch_balance()
         print(exchange.id, code, 'balance:', balance[code])
     await exchange.close()

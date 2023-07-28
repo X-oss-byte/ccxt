@@ -19,7 +19,7 @@ async def symbol_loop(exchange, method, symbol):
                 print(iso8601, exchange.id, method, symbol, len(response), 'trades')
 
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 

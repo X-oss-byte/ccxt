@@ -7,7 +7,7 @@ import time
 # ------------------------------------------------------------------------------
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 # ------------------------------------------------------------------------------
 

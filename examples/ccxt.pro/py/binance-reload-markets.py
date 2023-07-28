@@ -12,7 +12,7 @@ async def watch_order_book(exchange, symbol):
             datetime = exchange.iso8601(exchange.milliseconds())
             print(datetime, orderbook['nonce'], symbol, orderbook['asks'][0], orderbook['bids'][0])
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break
 
 
@@ -24,7 +24,7 @@ async def reload_markets(exchange, delay):
             datetime = exchange.iso8601(exchange.milliseconds())
             print(datetime, 'Markets reloaded')
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break
 
 

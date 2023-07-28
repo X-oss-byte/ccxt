@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -28,19 +28,17 @@ while True:
     print(exchange.iso8601(exchange.milliseconds()), 'Fetched', len(trades), 'trades')
     if len(trades) < 1:
         break
-    else:
-        first = exchange.safe_value(trades, 0)
-        last = exchange.safe_value(trades, len(trades) - 1)
-        print('From:', first['datetime'])
-        print('To:', last['datetime'])
-        all_trades = trades + all_trades
-        offset += len(trades)
+    first = exchange.safe_value(trades, 0)
+    last = exchange.safe_value(trades, len(trades) - 1)
+    print('From:', first['datetime'])
+    print('To:', last['datetime'])
+    all_trades = trades + all_trades
+    offset += len(trades)
     print(len(all_trades), 'trades fetched in total')
 
 print('-----------------------------------------------------------------')
 print(len(all_trades), 'trades fetched')
-first = exchange.safe_value(all_trades, 0)
-if first:
+if first := exchange.safe_value(all_trades, 0):
     last = exchange.safe_value(all_trades, len(all_trades) - 1)
     print('First:', first['datetime'])
     print('Last:', last['datetime'])

@@ -35,7 +35,7 @@ async def run_ohlcv_loop(exchange, symbol, timeframe, limit):
                 print(exchange.iso8601(exchange.milliseconds()), symbol, timeframe)
                 print(df[-signal:])
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
 
 
 async def main():

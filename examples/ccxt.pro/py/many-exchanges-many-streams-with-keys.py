@@ -18,7 +18,7 @@ async def symbol_loop(exchange, method, symbol):
             elif method == 'watchTrades':
                 print(iso8601, exchange.id, method, symbol, len(response), 'trades')
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 
@@ -38,7 +38,7 @@ async def method_loop(exchange, method):
             iso8601 = exchange.iso8601(now)
             print(iso8601, exchange.id, method, response)
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 

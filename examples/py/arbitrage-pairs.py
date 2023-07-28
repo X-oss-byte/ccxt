@@ -3,7 +3,7 @@
 import os
 import sys
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -49,7 +49,13 @@ def print_exchanges():
 
 
 def print_usage():
-    dump("Usage: python " + sys.argv[0], green('id1'), yellow('id2'), blue('id3'), '...')
+    dump(
+        f"Usage: python {sys.argv[0]}",
+        green('id1'),
+        yellow('id2'),
+        blue('id3'),
+        '...',
+    )
 
 
 proxies = [
@@ -78,8 +84,7 @@ if len(sys.argv) > 2:
         currentProxy = -1
         maxRetries = len(proxies)
 
-        for numRetries in range(0, maxRetries):
-
+        for _ in range(0, maxRetries):
             # try proxies in round-robin fashion
             currentProxy = (currentProxy + 1) % len(proxies)
 
@@ -118,7 +123,7 @@ if len(sys.argv) > 2:
     # print a table of arbitrable symbols
     table = []
     dump(green(' symbol          | ' + ''.join([' {:<15} | '.format(id) for id in ids])))
-    dump(green(''.join(['-----------------+-' for x in range(0, len(ids) + 1)])))
+    dump(green(''.join(['-----------------+-' for _ in range(0, len(ids) + 1)])))
 
     for symbol in arbitrableSymbols:
         string = ' {:<15} | '.format(symbol)

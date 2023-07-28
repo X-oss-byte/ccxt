@@ -30,7 +30,7 @@ async def create_order(exchange):
         print('create_order():')
         pprint(order)
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
 
 
 async def watch_orders(exchange):
@@ -41,7 +41,7 @@ async def watch_orders(exchange):
             print('watch_orders():')
             pprint(orders)
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break
     await exchange.close()
 

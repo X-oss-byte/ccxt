@@ -5,7 +5,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -34,10 +34,10 @@ async def test():
             response = await exchange.create_limit_buy_order(symbol, amount, price)
 
         except Exception as e:
-            print('Failed to create order with', exchange.id, type(e).__name__, str(e))
+            print('Failed to create order with', exchange.id, type(e).__name__, e)
 
     except Exception as e:
-        print('Failed to load markets from', exchange.id, type(e).__name__, str(e))
+        print('Failed to load markets from', exchange.id, type(e).__name__, e)
 
     await exchange.close()
     return response

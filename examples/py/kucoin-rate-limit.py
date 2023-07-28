@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -30,9 +30,9 @@ while True:
     except ccxt.RateLimitExceeded as e:
         now = exchange.milliseconds()
         datetime = exchange.iso8601(now)
-        print(datetime, i, type(e).__name__, str(e))
+        print(datetime, i, type(e).__name__, e)
         exchange.sleep(10000)
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
         raise e
     i += 1

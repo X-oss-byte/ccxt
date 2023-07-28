@@ -28,7 +28,7 @@ async def main():
             print(ticker['datetime'], symbol, [ticker['ask'], ticker['askVolume']], [ticker['bid'], ticker['bidVolume']])
             # -----------------------------------------------------------------
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break
     await exchange.close()
 

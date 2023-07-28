@@ -596,11 +596,11 @@ class bitfinex(Exchange, ImplicitAPI):
                 baseId = parts[0]
                 quoteId = parts[1]
             else:
-                baseId = id[0:3]
+                baseId = id[:3]
                 quoteId = id[3:6]
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
-            symbol = base + '/' + quote
+            symbol = f'{base}/{quote}'
             type = 'spot'
             if id.find('F0') > -1:
                 type = 'swap'
@@ -685,7 +685,10 @@ class bitfinex(Exchange, ImplicitAPI):
         accountType = self.safe_string(accountsByType, requestedType, requestedType)
         if accountType is None:
             keys = list(accountsByType.keys())
-            raise ExchangeError(self.id + ' fetchBalance() type parameter must be one of ' + ', '.join(keys))
+            raise ExchangeError(
+                f'{self.id} fetchBalance() type parameter must be one of '
+                + ', '.join(keys)
+            )
         query = self.omit(params, 'type')
         response = self.privatePostBalances(query)
         #    [{type: 'deposit',
@@ -717,7 +720,7 @@ class bitfinex(Exchange, ImplicitAPI):
                 # we need a workaround here so that the old BCH balance
                 # would not override the new BAB balance(BAB is unified to BCH)
                 # https://github.com/ccxt/ccxt/issues/4989
-                if not (code in result):
+                if code not in result:
                     account = self.account()
                     account['free'] = self.safe_string(balance, 'available')
                     account['total'] = self.safe_string(balance, 'amount')
@@ -763,7 +766,7 @@ class bitfinex(Exchange, ImplicitAPI):
         result = self.safe_value(response, 0)
         message = self.safe_string(result, 'message')
         if message is None:
-            raise ExchangeError(self.id + ' transfer failed')
+            raise ExchangeError(f'{self.id} transfer failed')
         return self.extend(self.parse_transfer(result, currency), {
             'fromAccount': fromAccount,
             'toAccount': toAccount,
@@ -799,10 +802,10 @@ class bitfinex(Exchange, ImplicitAPI):
     def convert_derivatives_id(self, currencyId, type):
         start = len(currencyId) - 2
         isDerivativeCode = currencyId[start:] == 'F0'
-        if (type != 'derivatives' and type != 'trading' and type != 'margin') and isDerivativeCode:
-            currencyId = currencyId[0:start]
+        if type not in ['derivatives', 'trading', 'margin'] and isDerivativeCode:
+            currencyId = currencyId[:start]
         elif type == 'derivatives' and not isDerivativeCode:
-            currencyId = currencyId + 'F0'
+            currencyId = f'{currencyId}F0'
         return currencyId
 
     def fetch_order_book(self, symbol: str, limit: Optional[int] = None, params={}):
@@ -992,7 +995,9 @@ class bitfinex(Exchange, ImplicitAPI):
         :returns [dict]: a list of `trade structures <https://docs.ccxt.com/#/?id=trade-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a `symbol` argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchMyTrades() requires a `symbol` argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1164,8 +1169,8 @@ class bitfinex(Exchange, ImplicitAPI):
         """
         self.load_markets()
         if symbol is not None:
-            if not (symbol in self.markets):
-                raise ExchangeError(self.id + ' has no symbol ' + symbol)
+            if symbol not in self.markets:
+                raise ExchangeError(f'{self.id} has no symbol {symbol}')
         response = self.privatePostOrders(params)
         orders = self.parse_orders(response, None, since, limit)
         if symbol is not None:
@@ -1264,7 +1269,7 @@ class bitfinex(Exchange, ImplicitAPI):
         # todo rewrite for https://api-pub.bitfinex.com//v2/conf/pub:map:tx:method
         if code in self.options['currencyNames']:
             return self.options['currencyNames'][code]
-        raise NotSupported(self.id + ' ' + code + ' not supported for withdrawal')
+        raise NotSupported(f'{self.id} {code} not supported for withdrawal')
 
     def create_deposit_address(self, code: str, params={}):
         """
@@ -1324,10 +1329,11 @@ class bitfinex(Exchange, ImplicitAPI):
         currency = None
         if currencyId is None:
             if code is None:
-                raise ArgumentsRequired(self.id + ' fetchTransactions() requires a currency `code` argument or a `currency` parameter')
-            else:
-                currency = self.currency(code)
-                currencyId = currency['id']
+                raise ArgumentsRequired(
+                    f'{self.id} fetchTransactions() requires a currency `code` argument or a `currency` parameter'
+                )
+            currency = self.currency(code)
+            currencyId = currency['id']
         query['currency'] = currencyId
         if since is not None:
             query['since'] = self.parse_to_int(since / 1000)
@@ -1478,8 +1484,10 @@ class bitfinex(Exchange, ImplicitAPI):
         if id == 0:
             if errorMessage is not None:
                 ExceptionClass = self.exceptions['broad'][errorMessage]
-                raise ExceptionClass(self.id + ' ' + message)
-            raise ExchangeError(self.id + ' withdraw returned an id of zero: ' + self.json(response))
+                raise ExceptionClass(f'{self.id} {message}')
+            raise ExchangeError(
+                f'{self.id} withdraw returned an id of zero: {self.json(response)}'
+            )
         return self.parse_transaction(response, currency)
 
     def fetch_positions(self, symbols: Optional[List[str]] = None, params={}):
@@ -1490,38 +1498,19 @@ class bitfinex(Exchange, ImplicitAPI):
         :returns [dict]: a list of `position structure <https://docs.ccxt.com/#/?id=position-structure>`
         """
         self.load_markets()
-        response = self.privatePostPositions(params)
-        #
-        #     [
-        #         {
-        #             "id":943715,
-        #             "symbol":"btcusd",
-        #             "status":"ACTIVE",
-        #             "base":"246.94",
-        #             "amount":"1.0",
-        #             "timestamp":"1444141857.0",
-        #             "swap":"0.0",
-        #             "pl":"-2.22042"
-        #         }
-        #     ]
-        #
-        # todo unify parsePosition/parsePositions
-        return response
+        return self.privatePostPositions(params)
 
     def nonce(self):
         return self.milliseconds()
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
-        request = '/' + self.implode_params(path, params)
-        if api == 'v2':
-            request = '/' + api + request
-        else:
-            request = '/' + self.version + request
+        request = f'/{self.implode_params(path, params)}'
+        request = f'/{api}{request}' if api == 'v2' else f'/{self.version}{request}'
         query = self.omit(params, self.extract_params(path))
         url = self.urls['api'][api] + request
         if (api == 'public') or (path.find('/hist') >= 0):
             if query:
-                suffix = '?' + self.urlencode(query)
+                suffix = f'?{self.urlencode(query)}'
                 url += suffix
                 request += suffix
         if api == 'private':
@@ -1558,7 +1547,7 @@ class bitfinex(Exchange, ImplicitAPI):
             if status == 'error':
                 throwError = True
         if throwError:
-            feedback = self.id + ' ' + body
+            feedback = f'{self.id} {body}'
             message = self.safe_string_2(response, 'message', 'error')
             self.throw_exactly_matched_exception(self.exceptions['exact'], message, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], message, feedback)

@@ -6,7 +6,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -55,7 +55,7 @@ try:
     cancelOrder = exchange.cancel_order(order['id'], symbol)
     print(cancelOrder)
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)
 
 
 # creating and canceling inverse swap (limit) order
@@ -85,4 +85,4 @@ try:
     # canceling an order
     cancelOrder = exchange.cancel_order(order['id'], symbol)
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)

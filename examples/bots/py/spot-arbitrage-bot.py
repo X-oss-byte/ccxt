@@ -8,7 +8,7 @@ from pprint import pprint
 import time
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -65,8 +65,7 @@ order_sizes = {
 
 async def get_last_prices():
     tasks = [ exchange.fetch_tickers(symbols) for exchange in exchanges ]
-    results = await asyncio.gather(*tasks)
-    return results
+    return await asyncio.gather(*tasks)
 
 async def bot():
     prices = await get_last_prices()
@@ -98,14 +97,14 @@ async def bot():
 
         if (profit > 0): # not taking into account slippage or order book depth
             print(ms, symbol, "profit:", profit, "Buy", min_exchange.id, min_price, "Sell", max_exchange.id, max_price)
-            
+
             if not paper_trading:
                 buy_min = min_exchange.create_market_buy_order(symbol, order_size)
                 sell_max = max_exchange.create_market_sell_order(symbol, order_size)
                 orders = await asyncio.gather(buy_min, sell_max) # execute them "simultaneously"
                 print("Orders executed successfully")
         else:
-            print(str(ms), symbol, "no arbitrage opportunity")
+            print(ms, symbol, "no arbitrage opportunity")
 
 async def check_requirements():
     print("Checking if exchanges support fetchTickers and the symbols we want to trade")

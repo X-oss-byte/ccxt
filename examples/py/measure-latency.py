@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -35,15 +35,15 @@ def main():
             # load all markets from the exchange
             markets = exchange.load_markets()
             print('Loaded', id, 'markets')
-            num_orders = int(sys.argv[2])
             symbol = sys.argv[3]
-            side = sys.argv[4]
-            amount = float(sys.argv[5])
-            price = float(sys.argv[6])
             if symbol in markets:
                 print('Testing', symbol)
                 results = []
-                for i in range(0, num_orders):
+                num_orders = int(sys.argv[2])
+                side = sys.argv[4]
+                amount = float(sys.argv[5])
+                price = float(sys.argv[6])
+                for _ in range(0, num_orders):
                     timestamp = exchange.milliseconds()
                     order = exchange.create_order(symbol, 'limit', side, amount, price)
                     elapsed = exchange.milliseconds() - timestamp
@@ -57,7 +57,7 @@ def main():
             print('Exchange', id, ' not found')
             print_usage()
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
         print_usage()
 
 print('CCXT Version:', ccxt.__version__)

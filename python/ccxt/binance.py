@@ -1513,16 +1513,10 @@ class binance(Exchange, ImplicitAPI):
         })
 
     def is_inverse(self, type, subType=None):
-        if subType is None:
-            return type == 'delivery'
-        else:
-            return subType == 'inverse'
+        return type == 'delivery' if subType is None else subType == 'inverse'
 
     def is_linear(self, type, subType=None):
-        if subType is None:
-            return(type == 'future') or (type == 'swap')
-        else:
-            return subType == 'linear'
+        return type in ['future', 'swap'] if subType is None else subType == 'linear'
 
     def set_sandbox_mode(self, enable):
         super(binance, self).set_sandbox_mode(enable)
@@ -1530,11 +1524,10 @@ class binance(Exchange, ImplicitAPI):
 
     def convert_expire_date(self, date):
         # parse YYMMDD to timestamp
-        year = date[0:2]
+        year = date[:2]
         month = date[2:4]
         day = date[4:6]
-        reconstructedDate = '20' + year + '-' + month + '-' + day + 'T00:00:00Z'
-        return reconstructedDate
+        return f'20{year}-{month}-{day}T00:00:00Z'
 
     def create_expired_option_market(self, symbol):
         # support expired option contracts
@@ -1553,8 +1546,8 @@ class binance(Exchange, ImplicitAPI):
         datetime = self.convert_expire_date(expiry)
         timestamp = self.parse8601(datetime)
         return {
-            'id': base + '-' + expiry + '-' + strikeAsString + '-' + optionType,
-            'symbol': base + '/' + settle + ':' + settle + '-' + expiry + '-' + strikeAsString + '-' + optionType,
+            'id': f'{base}-{expiry}-{strikeAsString}-{optionType}',
+            'symbol': f'{base}/{settle}:{settle}-{expiry}-{strikeAsString}-{optionType}',
             'base': base,
             'quote': settle,
             'baseId': base,
@@ -1599,25 +1592,23 @@ class binance(Exchange, ImplicitAPI):
 
     def market(self, symbol):
         if self.markets is None:
-            raise ExchangeError(self.id + ' markets not loaded')
+            raise ExchangeError(f'{self.id} markets not loaded')
         # defaultType has legacy support on binance
         defaultType = self.safe_string(self.options, 'defaultType')
         defaultSubType = self.safe_string(self.options, 'defaultSubType')
-        isLegacyLinear = defaultType == 'future'
-        isLegacyInverse = defaultType == 'delivery'
-        isLegacy = isLegacyLinear or isLegacyInverse
         if isinstance(symbol, str):
+            isLegacyLinear = defaultType == 'future'
+            isLegacyInverse = defaultType == 'delivery'
             if symbol in self.markets:
                 market = self.markets[symbol]
-                # begin diff
-                if isLegacy and market['spot']:
-                    settle = market['quote'] if isLegacyLinear else market['base']
-                    futuresSymbol = symbol + ':' + settle
-                    if futuresSymbol in self.markets:
-                        return self.markets[futuresSymbol]
-                else:
+                isLegacy = isLegacyLinear or isLegacyInverse
+                if not isLegacy or not market['spot']:
                     return market
-                # end diff
+                settle = market['quote'] if isLegacyLinear else market['base']
+                futuresSymbol = f'{symbol}:{settle}'
+                if futuresSymbol in self.markets:
+                    return self.markets[futuresSymbol]
+                        # end diff
             elif symbol in self.markets_by_id:
                 markets = self.markets_by_id[symbol]
                 # begin diff
@@ -1637,16 +1628,16 @@ class binance(Exchange, ImplicitAPI):
                 # support legacy symbols
                 base, quote = symbol.split('/')
                 settle = base if (quote == 'USD') else quote
-                futuresSymbol = symbol + ':' + settle
+                futuresSymbol = f'{symbol}:{settle}'
                 if futuresSymbol in self.markets:
                     return self.markets[futuresSymbol]
             elif (symbol.find('-C') > -1) or (symbol.find('-P') > -1):  # both exchange-id and unified symbols are supported self way regardless of the defaultType
                 return self.create_expired_option_market(symbol)
-        raise BadSymbol(self.id + ' does not have market symbol ' + symbol)
+        raise BadSymbol(f'{self.id} does not have market symbol {symbol}')
 
     def safe_market(self, marketId=None, market=None, delimiter=None, marketType=None):
         isOption = (marketId is not None) and ((marketId.find('-C') > -1) or (marketId.find('-P') > -1))
-        if isOption and not (marketId in self.markets_by_id):
+        if isOption and marketId not in self.markets_by_id:
             # handle expired option contracts
             return self.create_expired_option_market(marketId)
         return super(binance, self).safe_market(marketId, market, delimiter, marketType)
@@ -1874,16 +1865,18 @@ class binance(Exchange, ImplicitAPI):
             fetchMarkets.append(type)
         for i in range(0, len(fetchMarkets)):
             marketType = fetchMarkets[i]
-            if marketType == 'spot':
-                promisesRaw.append(self.publicGetExchangeInfo(params))
+            if marketType == 'inverse':
+                promisesRaw.append(self.dapiPublicGetExchangeInfo(params))
             elif marketType == 'linear':
                 promisesRaw.append(self.fapiPublicGetExchangeInfo(params))
-            elif marketType == 'inverse':
-                promisesRaw.append(self.dapiPublicGetExchangeInfo(params))
             elif marketType == 'option':
                 promisesRaw.append(self.eapiPublicGetExchangeInfo(params))
+            elif marketType == 'spot':
+                promisesRaw.append(self.publicGetExchangeInfo(params))
             else:
-                raise ExchangeError(self.id + ' fetchMarkets() self.options fetchMarkets "' + marketType + '" is not a supported market type')
+                raise ExchangeError(
+                    f'{self.id} fetchMarkets() self.options fetchMarkets "{marketType}" is not a supported market type'
+                )
         promises = promisesRaw
         spotMarkets = self.safe_value(self.safe_value(promises, 0), 'symbols', [])
         futureMarkets = self.safe_value(self.safe_value(promises, 1), 'symbols', [])
@@ -2097,10 +2090,7 @@ class binance(Exchange, ImplicitAPI):
         #
         if self.options['adjustForTimeDifference']:
             self.load_time_difference()
-        result = []
-        for i in range(0, len(markets)):
-            result.append(self.parse_market(markets[i]))
-        return result
+        return [self.parse_market(markets[i]) for i in range(0, len(markets))]
 
     def parse_market(self, market):
         swap = False
@@ -2138,14 +2128,14 @@ class binance(Exchange, ImplicitAPI):
         linear = None
         inverse = None
         strike = self.safe_integer(market, 'strikePrice')
-        symbol = base + '/' + quote
+        symbol = f'{base}/{quote}'
         if contract:
             if swap:
-                symbol = symbol + ':' + settle
+                symbol = f'{symbol}:{settle}'
             elif future:
-                symbol = symbol + ':' + settle + '-' + self.yymmdd(expiry)
+                symbol = f'{symbol}:{settle}-{self.yymmdd(expiry)}'
             elif option:
-                symbol = symbol + ':' + settle + '-' + self.yymmdd(expiry) + '-' + self.number_to_string(strike) + '-' + self.safe_string(optionParts, 3)
+                symbol = f'{symbol}:{settle}-{self.yymmdd(expiry)}-{self.number_to_string(strike)}-{self.safe_string(optionParts, 3)}'
             contractSize = self.safe_number_2(market, 'contractSize', 'unit', self.parse_number('1'))
             linear = settle == quote
             inverse = settle == base
@@ -2294,8 +2284,7 @@ class binance(Exchange, ImplicitAPI):
                 quote = self.safe_value(asset, 'quoteAsset', {})
                 baseCode = self.safe_currency_code(self.safe_string(base, 'asset'))
                 quoteCode = self.safe_currency_code(self.safe_string(quote, 'asset'))
-                subResult = {}
-                subResult[baseCode] = self.parse_balance_helper(base)
+                subResult = {baseCode: self.parse_balance_helper(base)}
                 subResult[quoteCode] = self.parse_balance_helper(quote)
                 result[symbol] = self.safe_balance(subResult)
         elif type == 'savings':
@@ -2383,7 +2372,7 @@ class binance(Exchange, ImplicitAPI):
                     for i in range(1, len(paramSymbols)):
                         symbol = paramSymbols[i]
                         id = self.market_id(symbol)
-                        symbols += ',' + id
+                        symbols += f',{id}'
                 else:
                     symbols = paramSymbols
                 request['symbols'] = symbols

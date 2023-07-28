@@ -8,7 +8,7 @@ import asciichartpy
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 root_folder = os.path.dirname(os.path.dirname(this_folder))
-sys.path.append(root_folder + '/python')
+sys.path.append(f'{root_folder}/python')
 sys.path.append(this_folder)
 
 # -----------------------------------------------------------------------------
@@ -44,8 +44,7 @@ def print_chart(exchange, symbol, timeframe):
     # print the chart
     print("\n" + asciichartpy.plot(series[-length:], {'height': height}))  # print the chart
 
-    last = ohlcv[len(ohlcv) - 1][index]  # last closing price
-    return last
+    return ohlcv[len(ohlcv) - 1][index]
 
 
 last = print_chart(exchange, symbol, '1m')

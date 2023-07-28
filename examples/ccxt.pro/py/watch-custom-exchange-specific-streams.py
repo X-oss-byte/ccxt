@@ -6,7 +6,7 @@ class MyBinance(ccxt.pro.binance):
 
     def handle_mini_ticker(self, client, message):
         market_id = self.safe_string_lower(message, 's')
-        message_hash = market_id + '@miniTicker'
+        message_hash = f'{market_id}@miniTicker'
         client.resolve(message, message_hash)
 
     def handle_message(self, client, message):
@@ -15,8 +15,7 @@ class MyBinance(ccxt.pro.binance):
             # add other custom handlers here
         }
         e = self.safe_string(message, 'e')
-        method = self.safe_value(handlers, e)
-        if method:
+        if method := self.safe_value(handlers, e):
             return method(client, message)
         else:
             return super(MyBinance, self).handle_message(client, message)
@@ -37,7 +36,7 @@ async def main():
         try:
             print(await exchange.watch_public(message_hash))
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
     await exchange.close()
 
 

@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -17,11 +17,11 @@ exchange = ccxt.binance({
 
 orders = [
     {
-        "symbol" : "BTCUSDT",
-        "side" : "BUY",
-        "positionSide" : "LONG",
-        "type" : "MARKET",
-        "quantity": float(0.005)
+        "symbol": "BTCUSDT",
+        "side": "BUY",
+        "positionSide": "LONG",
+        "type": "MARKET",
+        "quantity": 0.005,
     }
 ]
 

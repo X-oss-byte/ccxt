@@ -22,7 +22,7 @@ async def main():
         pprint(balance)
     except Exception as e:
         print('Failed to fetch the balance')
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     order = None
     print('-------------------------------------------------------------------')
     try:
@@ -40,7 +40,7 @@ async def main():
         pprint(order)
     except Exception as e:
         print('Failed to place', symbol, 'order')
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     print('-------------------------------------------------------------------')
     if order is not None:
         try:
@@ -48,7 +48,7 @@ async def main():
             pprint(response)
         except Exception as e:
             print('Failed to cancel', symbol, 'order')
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
     print('-------------------------------------------------------------------')
     await exchange.close()
 

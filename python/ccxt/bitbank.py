@@ -198,56 +198,66 @@ class bitbank(Exchange, ImplicitAPI):
             quoteId = self.safe_string(entry, 'quote_asset')
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
-            result.append({
-                'id': id,
-                'symbol': base + '/' + quote,
-                'base': base,
-                'quote': quote,
-                'settle': None,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'settleId': None,
-                'type': 'spot',
-                'spot': True,
-                'margin': False,
-                'swap': False,
-                'future': False,
-                'option': False,
-                'active': self.safe_value(entry, 'is_enabled'),
-                'contract': False,
-                'linear': None,
-                'inverse': None,
-                'taker': self.safe_number(entry, 'taker_fee_rate_quote'),
-                'maker': self.safe_number(entry, 'maker_fee_rate_quote'),
-                'contractSize': None,
-                'expiry': None,
-                'expiryDatetime': None,
-                'strike': None,
-                'optionType': None,
-                'precision': {
-                    'amount': self.parse_number(self.parse_precision(self.safe_string(entry, 'amount_digits'))),
-                    'price': self.parse_number(self.parse_precision(self.safe_string(entry, 'price_digits'))),
-                },
-                'limits': {
-                    'leverage': {
-                        'min': None,
-                        'max': None,
+            result.append(
+                {
+                    'id': id,
+                    'symbol': f'{base}/{quote}',
+                    'base': base,
+                    'quote': quote,
+                    'settle': None,
+                    'baseId': baseId,
+                    'quoteId': quoteId,
+                    'settleId': None,
+                    'type': 'spot',
+                    'spot': True,
+                    'margin': False,
+                    'swap': False,
+                    'future': False,
+                    'option': False,
+                    'active': self.safe_value(entry, 'is_enabled'),
+                    'contract': False,
+                    'linear': None,
+                    'inverse': None,
+                    'taker': self.safe_number(entry, 'taker_fee_rate_quote'),
+                    'maker': self.safe_number(entry, 'maker_fee_rate_quote'),
+                    'contractSize': None,
+                    'expiry': None,
+                    'expiryDatetime': None,
+                    'strike': None,
+                    'optionType': None,
+                    'precision': {
+                        'amount': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(entry, 'amount_digits')
+                            )
+                        ),
+                        'price': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(entry, 'price_digits')
+                            )
+                        ),
                     },
-                    'amount': {
-                        'min': self.safe_number(entry, 'unit_amount'),
-                        'max': self.safe_number(entry, 'limit_max_amount'),
+                    'limits': {
+                        'leverage': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'amount': {
+                            'min': self.safe_number(entry, 'unit_amount'),
+                            'max': self.safe_number(entry, 'limit_max_amount'),
+                        },
+                        'price': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'cost': {
+                            'min': None,
+                            'max': None,
+                        },
                     },
-                    'price': {
-                        'min': None,
-                        'max': None,
-                    },
-                    'cost': {
-                        'min': None,
-                        'max': None,
-                    },
-                },
-                'info': entry,
-            })
+                    'info': entry,
+                }
+            )
         return result
 
     def parse_ticker(self, ticker, market=None):
@@ -634,8 +644,7 @@ class bitbank(Exchange, ImplicitAPI):
             'pair': market['id'],
         }
         response = self.privatePostUserSpotCancelOrder(self.extend(request, params))
-        data = self.safe_value(response, 'data')
-        return data
+        return self.safe_value(response, 'data')
 
     def fetch_order(self, id: str, symbol: Optional[str] = None, params={}):
         """
@@ -738,8 +747,8 @@ class bitbank(Exchange, ImplicitAPI):
         :returns dict: a `transaction structure <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         tag, params = self.handle_withdraw_tag_and_params(tag, params)
-        if not ('uuid' in params):
-            raise ExchangeError(self.id + ' uuid is required for withdrawal')
+        if 'uuid' not in params:
+            raise ExchangeError(f'{self.id} uuid is required for withdrawal')
         self.load_markets()
         currency = self.currency(code)
         request = {
@@ -814,24 +823,24 @@ class bitbank(Exchange, ImplicitAPI):
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         query = self.omit(params, self.extract_params(path))
         url = self.implode_hostname(self.urls['api'][api]) + '/'
-        if (api == 'public') or (api == 'markets'):
+        if api in ['public', 'markets']:
             url += self.implode_params(path, params)
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         else:
             self.check_required_credentials()
             nonce = str(self.nonce())
             auth = nonce
-            url += self.version + '/' + self.implode_params(path, params)
+            url += f'{self.version}/{self.implode_params(path, params)}'
             if method == 'POST':
                 body = self.json(query)
                 auth += body
             else:
-                auth += '/' + self.version + '/' + path
+                auth += f'/{self.version}/{path}'
                 if query:
                     query = self.urlencode(query)
-                    url += '?' + query
-                    auth += '?' + query
+                    url += f'?{query}'
+                    auth += f'?{query}'
             headers = {
                 'Content-Type': 'application/json',
                 'ACCESS-KEY': self.apiKey,
@@ -915,5 +924,5 @@ class bitbank(Exchange, ImplicitAPI):
             if ErrorClass is not None:
                 raise errorClasses[code](message)
             else:
-                raise ExchangeError(self.id + ' ' + self.json(response))
+                raise ExchangeError(f'{self.id} {self.json(response)}')
         return None

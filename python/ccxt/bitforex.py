@@ -192,54 +192,64 @@ class bitforex(Exchange, ImplicitAPI):
             quoteId = symbolParts[1]
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
-            result.append({
-                'id': id,
-                'symbol': base + '/' + quote,
-                'base': base,
-                'quote': quote,
-                'settle': None,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'settleId': None,
-                'type': 'spot',
-                'spot': True,
-                'margin': False,
-                'swap': False,
-                'future': False,
-                'option': False,
-                'active': True,
-                'contract': False,
-                'linear': None,
-                'inverse': None,
-                'contractSize': None,
-                'expiry': None,
-                'expiryDateTime': None,
-                'strike': None,
-                'optionType': None,
-                'precision': {
-                    'amount': self.parse_number(self.parse_precision(self.safe_string(market, 'amountPrecision'))),
-                    'price': self.parse_number(self.parse_precision(self.safe_string(market, 'pricePrecision'))),
-                },
-                'limits': {
-                    'leverage': {
-                        'min': None,
-                        'max': None,
+            result.append(
+                {
+                    'id': id,
+                    'symbol': f'{base}/{quote}',
+                    'base': base,
+                    'quote': quote,
+                    'settle': None,
+                    'baseId': baseId,
+                    'quoteId': quoteId,
+                    'settleId': None,
+                    'type': 'spot',
+                    'spot': True,
+                    'margin': False,
+                    'swap': False,
+                    'future': False,
+                    'option': False,
+                    'active': True,
+                    'contract': False,
+                    'linear': None,
+                    'inverse': None,
+                    'contractSize': None,
+                    'expiry': None,
+                    'expiryDateTime': None,
+                    'strike': None,
+                    'optionType': None,
+                    'precision': {
+                        'amount': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'amountPrecision')
+                            )
+                        ),
+                        'price': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'pricePrecision')
+                            )
+                        ),
                     },
-                    'amount': {
-                        'min': self.safe_number(market, 'minOrderAmount'),
-                        'max': None,
+                    'limits': {
+                        'leverage': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'amount': {
+                            'min': self.safe_number(market, 'minOrderAmount'),
+                            'max': None,
+                        },
+                        'price': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'cost': {
+                            'min': None,
+                            'max': None,
+                        },
                     },
-                    'price': {
-                        'min': None,
-                        'max': None,
-                    },
-                    'cost': {
-                        'min': None,
-                        'max': None,
-                    },
-                },
-                'info': market,
-            })
+                    'info': market,
+                }
+            )
         return result
 
     def parse_trade(self, trade, market=None):
@@ -366,15 +376,8 @@ class bitforex(Exchange, ImplicitAPI):
         """
         self.check_required_symbol('fetchMyTrades', symbol)
         self.load_markets()
-        request = {
-            # 'symbol': market['id'],
-            # 'orderId': orderId,
-            # 'startTime': timestamp,
-            # 'endTime': timestamp,
-            # 'limit': limit,  # default 500, max 1000
-        }
         market = self.market(symbol)
-        request['symbol'] = market['id']
+        request = {'symbol': market['id']}
         if limit is not None:
             request['limit'] = limit
         if since is not None:
@@ -582,7 +585,7 @@ class bitforex(Exchange, ImplicitAPI):
             '3': 'canceled',
             '4': 'canceled',
         }
-        return statuses[status] if (status in statuses) else status
+        return statuses.get(status, status)
 
     def parse_side(self, sideId):
         if sideId == 1:
@@ -650,8 +653,7 @@ class bitforex(Exchange, ImplicitAPI):
             'orderId': id,
         }
         response = self.privatePostApiV1TradeOrderInfo(self.extend(request, params))
-        order = self.parse_order(response['data'], market)
-        return order
+        return self.parse_order(response['data'], market)
 
     def fetch_open_orders(self, symbol: Optional[str] = None, since: Optional[int] = None, limit: Optional[int] = None, params={}):
         """
@@ -663,7 +665,9 @@ class bitforex(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchMyTrades() requires a symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -683,7 +687,9 @@ class bitforex(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchMyTrades() requires a symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -740,25 +746,24 @@ class bitforex(Exchange, ImplicitAPI):
             request['symbol'] = self.market_id(symbol)
         results = self.privatePostApiV1TradeCancelOrder(self.extend(request, params))
         success = results['success']
-        returnVal = {'info': results, 'success': success}
-        return returnVal
+        return {'info': results, 'success': success}
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         url = self.urls['api']['rest'] + '/' + self.implode_params(path, params)
         query = self.omit(params, self.extract_params(path))
         if api == 'public':
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         else:
             self.check_required_credentials()
             payload = self.urlencode({'accessKey': self.apiKey})
             query['nonce'] = self.milliseconds()
             if query:
-                payload += '&' + self.urlencode(self.keysort(query))
+                payload += f'&{self.urlencode(self.keysort(query))}'
             # message = '/' + 'api/' + self.version + '/' + path + '?' + payload
-            message = '/' + path + '?' + payload
+            message = f'/{path}?{payload}'
             signature = self.hmac(self.encode(message), self.encode(self.secret), hashlib.sha256)
-            body = payload + '&signData=' + signature
+            body = f'{payload}&signData={signature}'
             headers = {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
@@ -767,8 +772,8 @@ class bitforex(Exchange, ImplicitAPI):
     def handle_errors(self, code, reason, url, method, headers, body, response, requestHeaders, requestBody):
         if not isinstance(body, str):
             return None  # fallback to default error handler
-        if (body[0] == '{') or (body[0] == '['):
-            feedback = self.id + ' ' + body
+        if body[0] in ['{', '[']:
+            feedback = f'{self.id} {body}'
             success = self.safe_value(response, 'success')
             if success is not None:
                 if not success:

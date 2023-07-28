@@ -31,7 +31,7 @@ async def watch_one_orderbook(exchange_spot, symbol):
             orderbooks[symbol] = orderbook
             when_orderbook_changed(exchange_spot, symbol, orderbook)
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
 
 
 async def watch_some_orderbooks(exchange_spot, symbol_list):

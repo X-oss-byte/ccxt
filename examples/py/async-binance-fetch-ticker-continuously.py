@@ -5,7 +5,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -25,20 +25,20 @@ async def main(symbol):
             print(exchange.iso8601(exchange.milliseconds()), 'fetched', symbol, 'ticker from', exchange.name)
             print(ticker)
         except ccxt.RequestTimeout as e:
-            print('[' + type(e).__name__ + ']')
-            print(str(e)[0:200])
-            # will retry
+            print(f'[{type(e).__name__}]')
+            print(str(e)[:200])
+                    # will retry
         except ccxt.DDoSProtection as e:
-            print('[' + type(e).__name__ + ']')
-            print(str(e.args)[0:200])
-            # will retry
+            print(f'[{type(e).__name__}]')
+            print(str(e.args)[:200])
+                    # will retry
         except ccxt.ExchangeNotAvailable as e:
-            print('[' + type(e).__name__ + ']')
-            print(str(e.args)[0:200])
-            # will retry
+            print(f'[{type(e).__name__}]')
+            print(str(e.args)[:200])
+                    # will retry
         except ccxt.ExchangeError as e:
-            print('[' + type(e).__name__ + ']')
-            print(str(e)[0:200])
+            print(f'[{type(e).__name__}]')
+            print(str(e)[:200])
             break  # won't retry
 
 

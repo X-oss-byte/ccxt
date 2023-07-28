@@ -665,7 +665,7 @@ class bitrue(Exchange, ImplicitAPI):
             entry = {
                 'id': id,
                 'lowercaseId': lowercaseId,
-                'symbol': base + '/' + quote,
+                'symbol': f'{base}/{quote}',
                 'base': base,
                 'quote': quote,
                 'settle': None,
@@ -678,7 +678,7 @@ class bitrue(Exchange, ImplicitAPI):
                 'swap': False,
                 'future': False,
                 'option': False,
-                'active': (status == 'TRADING'),
+                'active': status == 'TRADING',
                 'contract': False,
                 'linear': None,
                 'inverse': None,
@@ -688,10 +688,22 @@ class bitrue(Exchange, ImplicitAPI):
                 'strike': None,
                 'optionType': None,
                 'precision': {
-                    'amount': self.parse_number(self.parse_precision(amountPrecision)),
-                    'price': self.parse_number(self.parse_precision(pricePrecision)),
-                    'base': self.parse_number(self.parse_precision(self.safe_string(market, 'baseAssetPrecision'))),
-                    'quote': self.parse_number(self.parse_precision(self.safe_string(market, 'quotePrecision'))),
+                    'amount': self.parse_number(
+                        self.parse_precision(amountPrecision)
+                    ),
+                    'price': self.parse_number(
+                        self.parse_precision(pricePrecision)
+                    ),
+                    'base': self.parse_number(
+                        self.parse_precision(
+                            self.safe_string(market, 'baseAssetPrecision')
+                        )
+                    ),
+                    'quote': self.parse_number(
+                        self.parse_precision(
+                            self.safe_string(market, 'quotePrecision')
+                        )
+                    ),
                 },
                 'limits': {
                     'leverage': {
@@ -875,10 +887,13 @@ class bitrue(Exchange, ImplicitAPI):
         #     }
         #
         data = self.safe_value(response, 'data', {})
-        id = uppercaseBaseId + '_' + uppercaseQuoteId
+        id = f'{uppercaseBaseId}_{uppercaseQuoteId}'
         ticker = self.safe_value(data, id)
         if ticker is None:
-            raise ExchangeError(self.id + ' fetchTicker() could not find the ticker for ' + market['symbol'])
+            raise ExchangeError(
+                f'{self.id} fetchTicker() could not find the ticker for '
+                + market['symbol']
+            )
         return self.parse_ticker(ticker, market)
 
     def fetch_ohlcv(self, symbol: str, timeframe='1m', since: Optional[int] = None, limit: Optional[int] = None, params={}):
@@ -1269,7 +1284,9 @@ class bitrue(Exchange, ImplicitAPI):
         uppercaseType = type.upper()
         validOrderTypes = self.safe_value(market['info'], 'orderTypes')
         if not self.in_array(uppercaseType, validOrderTypes):
-            raise InvalidOrder(self.id + ' ' + type + ' is not a valid order type in market ' + symbol)
+            raise InvalidOrder(
+                f'{self.id} {type} is not a valid order type in market {symbol}'
+            )
         request = {
             'symbol': market['id'],
             'side': side.upper(),
@@ -1287,7 +1304,7 @@ class bitrue(Exchange, ImplicitAPI):
             request['newClientOrderId'] = clientOrderId
         if uppercaseType == 'LIMIT':
             if price is None:
-                raise InvalidOrder(self.id + ' createOrder() requires a price argument')
+                raise InvalidOrder(f'{self.id} createOrder() requires a price argument')
             request['price'] = self.price_to_precision(symbol, price)
         stopPrice = self.safe_value_2(params, 'triggerPrice', 'stopPrice')
         if stopPrice is not None:
@@ -1312,7 +1329,7 @@ class bitrue(Exchange, ImplicitAPI):
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOrder() requires a symbol argument')
+            raise ArgumentsRequired(f'{self.id} fetchOrder() requires a symbol argument')
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1337,7 +1354,9 @@ class bitrue(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchClosedOrders() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchClosedOrders() requires a symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1386,7 +1405,9 @@ class bitrue(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOpenOrders() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchOpenOrders() requires a symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1426,7 +1447,7 @@ class bitrue(Exchange, ImplicitAPI):
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' cancelOrder() requires a symbol argument')
+            raise ArgumentsRequired(f'{self.id} cancelOrder() requires a symbol argument')
         self.load_markets()
         market = self.market(symbol)
         origClientOrderId = self.safe_value_2(params, 'origClientOrderId', 'clientOrderId')
@@ -1463,7 +1484,9 @@ class bitrue(Exchange, ImplicitAPI):
         """
         method = self.safe_string(self.options, 'fetchMyTradesMethod', 'v2PrivateGetMyTrades')
         if (symbol is None) and (method == 'v2PrivateGetMyTrades'):
-            raise ArgumentsRequired(self.id + ' v2PrivateGetMyTrades() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} v2PrivateGetMyTrades() requires a symbol argument'
+            )
         self.load_markets()
         request = {
             # 'symbol': market['id'],
@@ -1511,7 +1534,7 @@ class bitrue(Exchange, ImplicitAPI):
         :returns [dict]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchDeposits() requires a code argument')
+            raise ArgumentsRequired(f'{self.id} fetchDeposits() requires a code argument')
         self.load_markets()
         currency = self.currency(code)
         request = {
@@ -1577,7 +1600,9 @@ class bitrue(Exchange, ImplicitAPI):
         :returns [dict]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchWithdrawals() requires a code argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchWithdrawals() requires a code argument'
+            )
         self.load_markets()
         currency = self.currency(code)
         request = {
@@ -1720,9 +1745,7 @@ class bitrue(Exchange, ImplicitAPI):
                 network = networkId.upper()
         code = self.safe_currency_code(currencyId, currency)
         feeCost = self.safe_number(transaction, 'fee')
-        fee = None
-        if feeCost is not None:
-            fee = {'currency': code, 'cost': feeCost}
+        fee = {'currency': code, 'cost': feeCost} if feeCost is not None else None
         return {
             'info': transaction,
             'id': id,
@@ -1768,7 +1791,9 @@ class bitrue(Exchange, ImplicitAPI):
             networkEntry = self.safe_value(networks, network, {})
             chainName = self.safe_string(networkEntry, 'id')  # handle ERC20>ETH alias
             if chainName is None:
-                raise ArgumentsRequired(self.id + ' withdraw() requires a network parameter or a chainName parameter')
+                raise ArgumentsRequired(
+                    f'{self.id} withdraw() requires a network parameter or a chainName parameter'
+                )
             params = self.omit(params, 'network')
         request = {
             'coin': currency['id'].upper(),
@@ -1868,29 +1893,34 @@ class bitrue(Exchange, ImplicitAPI):
             headers = {
                 'X-MBX-APIKEY': self.apiKey,
             }
-            if (method == 'GET') or (method == 'DELETE'):
-                url += '?' + query
+            if method in ['GET', 'DELETE']:
+                url += f'?{query}'
             else:
                 body = query
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        else:
-            if params:
-                url += '?' + self.urlencode(params)
+        elif params:
+            url += f'?{self.urlencode(params)}'
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
     def handle_errors(self, code, reason, url, method, headers, body, response, requestHeaders, requestBody):
-        if (code == 418) or (code == 429):
-            raise DDoSProtection(self.id + ' ' + str(code) + ' ' + reason + ' ' + body)
+        if code in [418, 429]:
+            raise DDoSProtection(f'{self.id} {str(code)} {reason} {body}')
         # error response in a form: {"code": -1013, "msg": "Invalid quantity."}
         # following block cointains legacy checks against message patterns in "msg" property
         # will switch "code" checks eventually, when we know all of them
         if code >= 400:
             if body.find('Price * QTY is zero or less') >= 0:
-                raise InvalidOrder(self.id + ' order cost = amount * price is zero or less ' + body)
+                raise InvalidOrder(
+                    f'{self.id} order cost = amount * price is zero or less {body}'
+                )
             if body.find('LOT_SIZE') >= 0:
-                raise InvalidOrder(self.id + ' order amount should be evenly divisible by lot size ' + body)
+                raise InvalidOrder(
+                    f'{self.id} order amount should be evenly divisible by lot size {body}'
+                )
             if body.find('PRICE_FILTER') >= 0:
-                raise InvalidOrder(self.id + ' order price is invalid, i.e. exceeds allowed price precision, exceeds min price or max price limits or is invalid float value in general, use self.price_to_precision(symbol, amount) ' + body)
+                raise InvalidOrder(
+                    f'{self.id} order price is invalid, i.e. exceeds allowed price precision, exceeds min price or max price limits or is invalid float value in general, use self.price_to_precision(symbol, amount) {body}'
+                )
         if response is None:
             return None  # fallback to default error handler
         # check success value for wapi endpoints
@@ -1909,8 +1939,12 @@ class bitrue(Exchange, ImplicitAPI):
                     response = parsedMessage
         message = self.safe_string(response, 'msg')
         if message is not None:
-            self.throw_exactly_matched_exception(self.exceptions['exact'], message, self.id + ' ' + message)
-            self.throw_broadly_matched_exception(self.exceptions['broad'], message, self.id + ' ' + message)
+            self.throw_exactly_matched_exception(
+                self.exceptions['exact'], message, f'{self.id} {message}'
+            )
+            self.throw_broadly_matched_exception(
+                self.exceptions['broad'], message, f'{self.id} {message}'
+            )
         # checks against error codes
         error = self.safe_string(response, 'code')
         if error is not None:
@@ -1922,16 +1956,16 @@ class bitrue(Exchange, ImplicitAPI):
             # despite that their message is very confusing, it is raised by Binance
             # on a temporary ban, the API key is valid, but disabled for a while
             if (error == '-2015') and self.options['hasAlreadyAuthenticatedSuccessfully']:
-                raise DDoSProtection(self.id + ' temporary banned: ' + body)
-            feedback = self.id + ' ' + body
+                raise DDoSProtection(f'{self.id} temporary banned: {body}')
+            feedback = f'{self.id} {body}'
             self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
             raise ExchangeError(feedback)
         if not success:
-            raise ExchangeError(self.id + ' ' + body)
+            raise ExchangeError(f'{self.id} {body}')
         return None
 
     def calculate_rate_limiter_cost(self, api, method, path, params, config={}):
-        if ('noSymbol' in config) and not ('symbol' in params):
+        if 'noSymbol' in config and 'symbol' not in params:
             return config['noSymbol']
         elif ('byLimit' in config) and ('limit' in params):
             limit = params['limit']

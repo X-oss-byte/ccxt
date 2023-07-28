@@ -5,7 +5,7 @@ from random import randint
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -51,7 +51,7 @@ try:
     cancelOrder = exchange.cancel_order(order['id'], symbol)
     print(cancelOrder)
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)
 
 
 # creating and canceling a stop limit sell order
@@ -80,4 +80,4 @@ try:
     cancelOrder = exchange.cancel_order(order['id'], symbol)
     print(cancelOrder)
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)

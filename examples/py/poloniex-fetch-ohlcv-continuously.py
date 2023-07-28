@@ -6,7 +6,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -36,10 +36,10 @@ async def fetch_ohlcvs_continuously(exchange, timeframe, symbol, fetching_time):
                 ohlcvs = await exchange.fetch_ohlcv(symbol, timeframe, since, limit)
                 break
             except Exception as e:
-                print(type(e).__name__, e.args, str(e))  # comment if not needed
-                # break  # uncomment to break it
-                # pass   # uncomment to do nothing and just retry again on next iteration
-                # or add your own reaction according to the purpose of your app
+                print(type(e).__name__, e.args, e)
+                            # break  # uncomment to break it
+                            # pass   # uncomment to do nothing and just retry again on next iteration
+                            # or add your own reaction according to the purpose of your app
         print(exchange.id, timeframe, symbol, 'fetched', len(ohlcvs), 'candle(s), time now is', exchange.iso8601(exchange.milliseconds()))
         print(exchange.id, timeframe, symbol, 'all candles:')
         all_ohlcvs += ohlcvs

@@ -26,7 +26,7 @@ async def watch_order_book(exchange, symbol):
             data['orderbook'] = await exchange.watch_order_book(symbol)
             common_handler(exchange, symbol)
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break  # break this loop
 
 
@@ -36,7 +36,7 @@ async def watch_balance(exchange, symbol):
             data['balance'] = await exchange.watch_balance()
             common_handler(exchange, symbol)
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break  # break this loop
 
 
@@ -55,7 +55,7 @@ async def main():
             ]
             await gather(*loops)
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             break
     await exchange.close()
 

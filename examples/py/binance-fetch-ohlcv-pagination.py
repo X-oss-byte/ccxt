@@ -6,7 +6,7 @@ import ccxt  # noqa: E402
 def table(values):
     first = values[0]
     keys = list(first.keys()) if isinstance(first, dict) else range(0, len(first))
-    widths = [max([len(str(v[k])) for v in values]) for k in keys]
+    widths = [max(len(str(v[k])) for v in values) for k in keys]
     string = ' | '.join(['{:<' + str(w) + '}' for w in widths])
     return "\n".join([string.format(*[str(v[k]) for k in keys]) for v in values])
 
@@ -29,7 +29,7 @@ def main():
             else:
                 break
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
     print('Fetched', len(all_ohlcvs), symbol, timeframe, 'candles in total')
     if len(all_ohlcvs):
         print(table([[exchange.iso8601(o[0])] + o[1:] for o in all_ohlcvs]))

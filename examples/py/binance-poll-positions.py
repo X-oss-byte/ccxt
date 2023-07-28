@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -26,5 +26,5 @@ while True:
         print(exchange.iso8601(exchange.milliseconds()), len(positions), 'positions')
         print([ [position['symbol'], position['contracts']] for position in positions ])
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
 

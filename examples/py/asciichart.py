@@ -31,7 +31,7 @@ def plot(series, cfg={}):
     width = len(series) + offset
     # format = cfg['format'] if 'format' in cfg else lambda x: (padding + '{:.2f}'.format(x))[:-len(padding)]
 
-    result = [[' '] * width for i in range(rows + 1)]
+    result = [[' '] * width for _ in range(rows + 1)]
 
     # axis and labels
     for y in range(intmin2, intmax2 + 1):

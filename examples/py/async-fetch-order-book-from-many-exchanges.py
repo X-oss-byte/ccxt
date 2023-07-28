@@ -6,7 +6,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -24,7 +24,7 @@ async def loop(exchange_id, symbol):
         # exchange.verbose = True  # uncomment for debugging purposes
         orderbook = await exchange.fetch_order_book(symbol)
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     await exchange.close()
     return exchange.extend (orderbook, {
         'exchange_id': exchange_id,
