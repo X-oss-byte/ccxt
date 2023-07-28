@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -25,7 +25,7 @@ tickers = exchange.fetch_tickers()
 destination_code = 'USDT'
 total_destination_value = 0
 for code, amount in balance['total'].items():
-    symbol = code + '/' + destination_code
+    symbol = f'{code}/{destination_code}'
     ticker = tickers.get(symbol, None)
     if ticker is not None:
         valuation = amount * ticker['last']

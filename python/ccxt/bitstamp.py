@@ -466,62 +466,70 @@ class bitstamp(Exchange, ImplicitAPI):
             minimumOrder = self.safe_string(market, 'minimum_order')
             parts = minimumOrder.split(' ')
             status = self.safe_string(market, 'trading')
-            result.append({
-                'id': self.safe_string(market, 'url_symbol'),
-                'marketId': baseId + '_' + quoteId,
-                'symbol': base + '/' + quote,
-                'base': base,
-                'quote': quote,
-                'settle': None,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'settleId': None,
-                'type': 'spot',
-                'spot': True,
-                'margin': False,
-                'future': False,
-                'swap': False,
-                'option': False,
-                'active': (status == 'Enabled'),
-                'contract': False,
-                'linear': None,
-                'inverse': None,
-                'contractSize': None,
-                'expiry': None,
-                'expiryDatetime': None,
-                'strike': None,
-                'optionType': None,
-                'precision': {
-                    'amount': self.parse_number(self.parse_precision(self.safe_string(market, 'base_decimals'))),
-                    'price': self.parse_number(self.parse_precision(self.safe_string(market, 'counter_decimals'))),
-                },
-                'limits': {
-                    'leverage': {
-                        'min': None,
-                        'max': None,
+            result.append(
+                {
+                    'id': self.safe_string(market, 'url_symbol'),
+                    'marketId': f'{baseId}_{quoteId}',
+                    'symbol': f'{base}/{quote}',
+                    'base': base,
+                    'quote': quote,
+                    'settle': None,
+                    'baseId': baseId,
+                    'quoteId': quoteId,
+                    'settleId': None,
+                    'type': 'spot',
+                    'spot': True,
+                    'margin': False,
+                    'future': False,
+                    'swap': False,
+                    'option': False,
+                    'active': status == 'Enabled',
+                    'contract': False,
+                    'linear': None,
+                    'inverse': None,
+                    'contractSize': None,
+                    'expiry': None,
+                    'expiryDatetime': None,
+                    'strike': None,
+                    'optionType': None,
+                    'precision': {
+                        'amount': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'base_decimals')
+                            )
+                        ),
+                        'price': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'counter_decimals')
+                            )
+                        ),
                     },
-                    'amount': {
-                        'min': None,
-                        'max': None,
+                    'limits': {
+                        'leverage': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'amount': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'price': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'cost': {
+                            'min': self.safe_number(parts, 0),
+                            'max': None,
+                        },
                     },
-                    'price': {
-                        'min': None,
-                        'max': None,
-                    },
-                    'cost': {
-                        'min': self.safe_number(parts, 0),
-                        'max': None,
-                    },
-                },
-                'info': market,
-            })
+                    'info': market,
+                }
+            )
         return result
 
     def construct_currency_object(self, id, code, name, precision, minCost, originalPayload):
-        currencyType = 'crypto'
         description = self.describe()
-        if self.is_fiat(code):
-            currencyType = 'fiat'
+        currencyType = 'fiat' if self.is_fiat(code) else 'crypto'
         tickSize = self.parse_number(self.parse_precision(self.number_to_string(precision)))
         return {
             'id': id,
@@ -605,10 +613,10 @@ class bitstamp(Exchange, ImplicitAPI):
             minimumOrder = self.safe_string(market, 'minimum_order')
             parts = minimumOrder.split(' ')
             cost = parts[0]
-            if not (base in result):
+            if base not in result:
                 baseDecimals = self.safe_integer(market, 'base_decimals')
                 result[base] = self.construct_currency_object(baseId, base, baseDescription, baseDecimals, None, market)
-            if not (quote in result):
+            if quote not in result:
                 counterDecimals = self.safe_integer(market, 'counter_decimals')
                 result[quote] = self.construct_currency_object(quoteId, quote, quoteDescription, counterDecimals, self.parse_number(cost), market)
         return result
@@ -801,7 +809,9 @@ class bitstamp(Exchange, ImplicitAPI):
         currencyIds = list(trade.keys())
         numCurrencyIds = len(currencyIds)
         if numCurrencyIds > 2:
-            raise ExchangeError(self.id + ' getMarketFromTrade() too many keys: ' + self.json(currencyIds) + ' in the trade: ' + self.json(trade))
+            raise ExchangeError(
+                f'{self.id} getMarketFromTrade() too many keys: {self.json(currencyIds)} in the trade: {self.json(trade)}'
+            )
         if numCurrencyIds == 2:
             marketId = currencyIds[0] + currencyIds[1]
             if marketId in self.markets_by_id:
@@ -885,14 +895,11 @@ class bitstamp(Exchange, ImplicitAPI):
                 # iso8601
                 timestamp = self.parse8601(datetimeString)
             else:
-                # string unix epoch in seconds
-                timestamp = int(datetimeString)
-                timestamp = timestamp * 1000
+                timestamp = int(datetimeString) * 1000
         # if it is a private trade
         if 'id' in trade:
             if amountString is not None:
-                isAmountNeg = Precise.string_lt(amountString, '0')
-                if isAmountNeg:
+                if isAmountNeg := Precise.string_lt(amountString, '0'):
                     side = 'sell'
                     amountString = Precise.string_neg(amountString)
                 else:
@@ -1046,9 +1053,9 @@ class bitstamp(Exchange, ImplicitAPI):
             currency = self.currency(code)
             currencyId = currency['id']
             account = self.account()
-            account['free'] = self.safe_string(response, currencyId + '_available')
-            account['used'] = self.safe_string(response, currencyId + '_reserved')
-            account['total'] = self.safe_string(response, currencyId + '_balance')
+            account['free'] = self.safe_string(response, f'{currencyId}_available')
+            account['used'] = self.safe_string(response, f'{currencyId}_reserved')
+            account['total'] = self.safe_string(response, f'{currencyId}_balance')
             result[code] = account
         return self.safe_balance(result)
 
@@ -1259,15 +1266,15 @@ class bitstamp(Exchange, ImplicitAPI):
         """
         self.load_markets()
         market = self.market(symbol)
-        method = 'privatePost' + self.capitalize(side)
+        method = f'privatePost{self.capitalize(side)}'
         request = {
             'pair': market['id'],
             'amount': self.amount_to_precision(symbol, amount),
         }
-        if type == 'market':
-            method += 'Market'
-        elif type == 'instant':
+        if type == 'instant':
             method += 'Instant'
+        elif type == 'market':
+            method += 'Market'
         else:
             request['price'] = self.price_to_precision(symbol, price)
         method += 'Pair'
@@ -1341,9 +1348,7 @@ class bitstamp(Exchange, ImplicitAPI):
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
         self.load_markets()
-        market = None
-        if symbol is not None:
-            market = self.market(symbol)
+        market = self.market(symbol) if symbol is not None else None
         clientOrderId = self.safe_value_2(params, 'client_order_id', 'clientOrderId')
         request = {}
         if clientOrderId is not None:
@@ -1409,35 +1414,7 @@ class bitstamp(Exchange, ImplicitAPI):
         if limit is not None:
             request['limit'] = limit
         response = self.privatePostUserTransactions(self.extend(request, params))
-        #
-        #     [
-        #         {
-        #             "fee": "0.00000000",
-        #             "btc_usd": "0.00",
-        #             "id": 1234567894,
-        #             "usd": 0,
-        #             "btc": 0,
-        #             "datetime": "2018-09-08 09:00:31",
-        #             "type": "1",
-        #             "xrp": "-20.00000000",
-        #             "eur": 0,
-        #         },
-        #         {
-        #             "fee": "0.00000000",
-        #             "btc_usd": "0.00",
-        #             "id": 1134567891,
-        #             "usd": 0,
-        #             "btc": 0,
-        #             "datetime": "2018-09-07 18:47:52",
-        #             "type": "0",
-        #             "xrp": "20.00000000",
-        #             "eur": 0,
-        #         },
-        #     ]
-        #
-        currency = None
-        if code is not None:
-            currency = self.currency(code)
+        currency = self.currency(code) if code is not None else None
         transactions = self.filter_by_array(response, 'type', ['0', '1'], False)
         return self.parse_transactions(transactions, currency, since, limit)
 
@@ -1451,11 +1428,11 @@ class bitstamp(Exchange, ImplicitAPI):
         :returns [dict]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         self.load_markets()
-        request = {}
-        if since is not None:
-            request['timedelta'] = self.milliseconds() - since
-        else:
-            request['timedelta'] = 50000000  # use max bitstamp approved value
+        request = {
+            'timedelta': self.milliseconds() - since
+            if since is not None
+            else 50000000
+        }
         response = self.privatePostWithdrawalRequests(self.extend(request, params))
         #
         #     [
@@ -1798,9 +1775,7 @@ class bitstamp(Exchange, ImplicitAPI):
         if limit is not None:
             request['limit'] = limit
         response = self.privatePostUserTransactions(self.extend(request, params))
-        currency = None
-        if code is not None:
-            currency = self.currency(code)
+        currency = self.currency(code) if code is not None else None
         return self.parse_ledger(response, currency, since, limit)
 
     def fetch_open_orders(self, symbol: Optional[str] = None, since: Optional[int] = None, limit: Optional[int] = None, params={}):
@@ -1812,10 +1787,8 @@ class bitstamp(Exchange, ImplicitAPI):
         :param dict params: extra parameters specific to the bitstamp api endpoint
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
-        market = None
         self.load_markets()
-        if symbol is not None:
-            market = self.market(symbol)
+        market = self.market(symbol) if symbol is not None else None
         response = self.privatePostOpenOrdersAll(params)
         #
         #     [
@@ -1844,7 +1817,7 @@ class bitstamp(Exchange, ImplicitAPI):
         return code.lower()
 
     def is_fiat(self, code):
-        return code == 'USD' or code == 'EUR' or code == 'GBP'
+        return code in ['USD', 'EUR', 'GBP']
 
     def fetch_deposit_address(self, code: str, params={}):
         """
@@ -1854,9 +1827,11 @@ class bitstamp(Exchange, ImplicitAPI):
         :returns dict: an `address structure <https://docs.ccxt.com/#/?id=address-structure>`
         """
         if self.is_fiat(code):
-            raise NotSupported(self.id + ' fiat fetchDepositAddress() for ' + code + ' is not supported!')
+            raise NotSupported(
+                f'{self.id} fiat fetchDepositAddress() for {code} is not supported!'
+            )
         name = self.get_currency_name(code)
-        method = 'privatePost' + self.capitalize(name) + 'Address'
+        method = f'privatePost{self.capitalize(name)}Address'
         response = getattr(self, method)(params)
         address = self.safe_string(response, 'address')
         tag = self.safe_string_2(response, 'memo_id', 'destination_tag')
@@ -1891,11 +1866,11 @@ class bitstamp(Exchange, ImplicitAPI):
         method = None
         if not self.is_fiat(code):
             name = self.get_currency_name(code)
-            method = 'privatePost' + self.capitalize(name) + 'Withdrawal'
+            method = f'privatePost{self.capitalize(name)}Withdrawal'
             if code == 'XRP':
                 if tag is not None:
                     request['destination_tag'] = tag
-            elif code == 'XLM' or code == 'HBAR':
+            elif code in {'XLM', 'HBAR'}:
                 if tag is not None:
                     request['memo_id'] = tag
             request['address'] = address
@@ -1912,15 +1887,15 @@ class bitstamp(Exchange, ImplicitAPI):
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
         url = self.urls['api'][api] + '/'
-        url += self.version + '/'
+        url += f'{self.version}/'
         url += self.implode_params(path, params)
         query = self.omit(params, self.extract_params(path))
         if api == 'public':
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         else:
             self.check_required_credentials()
-            xAuth = 'BITSTAMP ' + self.apiKey
+            xAuth = f'BITSTAMP {self.apiKey}'
             xAuthNonce = self.uuid()
             xAuthTimestamp = str(self.milliseconds())
             xAuthVersion = 'v2'
@@ -1932,18 +1907,9 @@ class bitstamp(Exchange, ImplicitAPI):
                 'X-Auth-Version': xAuthVersion,
             }
             if method == 'POST':
-                if query:
-                    body = self.urlencode(query)
-                    contentType = 'application/x-www-form-urlencoded'
-                    headers['Content-Type'] = contentType
-                else:
-                    # sending an empty POST request will trigger
-                    # an API0020 error returned by the exchange
-                    # therefore for empty requests we send a dummy object
-                    # https://github.com/ccxt/ccxt/issues/6846
-                    body = self.urlencode({'foo': 'bar'})
-                    contentType = 'application/x-www-form-urlencoded'
-                    headers['Content-Type'] = contentType
+                contentType = 'application/x-www-form-urlencoded'
+                body = self.urlencode(query) if query else self.urlencode({'foo': 'bar'})
+                headers['Content-Type'] = contentType
             authBody = body if body else ''
             auth = xAuth + method + url.replace('https://', '') + contentType + xAuthNonce + xAuthTimestamp + xAuthVersion + authBody
             signature = self.hmac(self.encode(auth), self.encode(self.secret), hashlib.sha256)
@@ -1982,8 +1948,10 @@ class bitstamp(Exchange, ImplicitAPI):
                     errors.append(all[i])
             code = self.safe_string(response, 'code')
             if code == 'API0005':
-                raise AuthenticationError(self.id + ' invalid signature, use the uid for the main account if you have subaccounts')
-            feedback = self.id + ' ' + body
+                raise AuthenticationError(
+                    f'{self.id} invalid signature, use the uid for the main account if you have subaccounts'
+                )
+            feedback = f'{self.id} {body}'
             for i in range(0, len(errors)):
                 value = errors[i]
                 self.throw_exactly_matched_exception(self.exceptions['exact'], value, feedback)

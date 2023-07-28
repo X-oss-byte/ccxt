@@ -25,9 +25,9 @@ async def main():
         try:
             orderbook = await exchange.watch_order_book(symbol)
         except Exception as e:
-            print(str(e))
-            # raise e  # uncomment to break all loops in case of an error in any one of them
-            # break  # you can also break just this one loop if it fails
+            print(e)
+                    # raise e  # uncomment to break all loops in case of an error in any one of them
+                    # break  # you can also break just this one loop if it fails
     await exchange.close()
 
 

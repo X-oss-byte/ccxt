@@ -311,7 +311,7 @@ class bitopro(Exchange, ImplicitAPI):
             quoteId = self.safe_string(market, 'quote')
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
-            symbol = base + '/' + quote
+            symbol = f'{base}/{quote}'
             limits = {
                 'amount': {
                     'min': self.safe_number(market, 'minLimitBaseAmount'),
@@ -536,11 +536,7 @@ class bitopro(Exchange, ImplicitAPI):
         type = self.safe_string_lower(trade, 'type')
         side = self.safe_string_lower(trade, 'action')
         if side is None:
-            isBuyer = self.safe_value(trade, 'isBuyer')
-            if isBuyer:
-                side = 'buy'
-            else:
-                side = 'sell'
+            side = 'buy' if (isBuyer := self.safe_value(trade, 'isBuyer')) else 'sell'
         amount = self.safe_string(trade, 'amount')
         if amount is None:
             amount = self.safe_string(trade, 'baseAmount')
@@ -556,10 +552,7 @@ class bitopro(Exchange, ImplicitAPI):
         isTaker = self.safe_value(trade, 'isTaker')
         takerOrMaker = None
         if isTaker is not None:
-            if isTaker:
-                takerOrMaker = 'taker'
-            else:
-                takerOrMaker = 'maker'
+            takerOrMaker = 'taker' if isTaker else 'maker'
         return self.safe_trade({
             'id': id,
             'info': trade,
@@ -760,10 +753,7 @@ class bitopro(Exchange, ImplicitAPI):
         result = []
         copyFrom = candles[0]
         timestamp = None
-        if since is None:
-            timestamp = copyFrom[0]
-        else:
-            timestamp = since
+        timestamp = copyFrom[0] if since is None else since
         i = 0
         candleLength = len(candles)
         resultLength = 0
@@ -899,9 +889,7 @@ class bitopro(Exchange, ImplicitAPI):
         filled = self.safe_string(order, 'executedAmount')
         remaining = self.safe_string(order, 'remainingAmount')
         timeInForce = self.safe_string(order, 'timeInForce')
-        postOnly = None
-        if timeInForce == 'POST_ONLY':
-            postOnly = True
+        postOnly = True if timeInForce == 'POST_ONLY' else None
         fee = None
         feeAmount = self.safe_string(order, 'fee')
         feeSymbol = self.safe_currency_code(self.safe_string(order, 'feeSymbol'))
@@ -963,16 +951,19 @@ class bitopro(Exchange, ImplicitAPI):
             stopPrice = self.safe_value_2(params, 'triggerPrice', 'stopPrice')
             params = self.omit(params, ['triggerPrice', 'stopPrice'])
             if stopPrice is None:
-                raise InvalidOrder(self.id + ' createOrder() requires a stopPrice parameter for ' + orderType + ' orders')
+                raise InvalidOrder(
+                    f'{self.id} createOrder() requires a stopPrice parameter for {orderType} orders'
+                )
             else:
                 request['stopPrice'] = self.price_to_precision(symbol, stopPrice)
             condition = self.safe_string(params, 'condition')
             if condition is None:
-                raise InvalidOrder(self.id + ' createOrder() requires a condition parameter for ' + orderType + ' orders')
+                raise InvalidOrder(
+                    f'{self.id} createOrder() requires a condition parameter for {orderType} orders'
+                )
             else:
                 request['condition'] = condition
-        postOnly = self.is_post_only(orderType == 'MARKET', None, params)
-        if postOnly:
+        if postOnly := self.is_post_only(orderType == 'MARKET', None, params):
             request['timeInForce'] = 'POST_ONLY'
         response = self.privatePostOrdersPair(self.extend(request, params))
         #
@@ -996,7 +987,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' cancelOrder() requires the symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} cancelOrder() requires the symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1024,24 +1017,12 @@ class bitopro(Exchange, ImplicitAPI):
         :returns dict: an list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' cancelOrders() requires a symbol argument')
+            raise ArgumentsRequired(f'{self.id} cancelOrders() requires a symbol argument')
         self.load_markets()
         market = self.market(symbol)
         id = market['uppercaseId']
-        request = {}
-        request[id] = ids
-        response = self.privatePutOrders(self.extend(request, params))
-        #
-        #     {
-        #         "data":{
-        #             "BNB_TWD":[
-        #                 "5236347105",
-        #                 "359488711"
-        #             ]
-        #         }
-        #     }
-        #
-        return response
+        request = {id: ids}
+        return self.privatePutOrders(self.extend(request, params))
 
     def cancel_all_orders(self, symbol: Optional[str] = None, params={}):
         """
@@ -1061,18 +1042,7 @@ class bitopro(Exchange, ImplicitAPI):
             request['pair'] = market['id']
             method = 'privateDeleteOrdersPair'
         response = getattr(self, method)(self.extend(request, params))
-        result = self.safe_value(response, 'data', {})
-        #
-        #     {
-        #         "data":{
-        #             "BNB_TWD":[
-        #                 "9515988421",
-        #                 "4639130027"
-        #             ]
-        #         }
-        #     }
-        #
-        return result
+        return self.safe_value(response, 'data', {})
 
     def fetch_order(self, id: str, symbol: Optional[str] = None, params={}):
         """
@@ -1082,7 +1052,7 @@ class bitopro(Exchange, ImplicitAPI):
         :returns dict: An `order structure <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOrder() requires the symbol argument')
+            raise ArgumentsRequired(f'{self.id} fetchOrder() requires the symbol argument')
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1125,7 +1095,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOrders() requires the symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchOrders() requires the symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1201,7 +1173,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns [dict]: a list of `trade structures <https://docs.ccxt.com/#/?id=trade-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchMyTrades() requires the symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchMyTrades() requires the symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -1334,7 +1308,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns [dict]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchDeposits() requires the code argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchDeposits() requires the code argument'
+            )
         self.load_markets()
         currency = self.safe_currency(code)
         request = {
@@ -1380,7 +1356,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns [dict]: a list of `transaction structures <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchWithdrawals() requires the code argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchWithdrawals() requires the code argument'
+            )
         self.load_markets()
         currency = self.safe_currency(code)
         request = {
@@ -1424,7 +1402,9 @@ class bitopro(Exchange, ImplicitAPI):
         :returns dict: a `transaction structure <https://docs.ccxt.com/#/?id=transaction-structure>`
         """
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchWithdrawal() requires the code argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchWithdrawal() requires the code argument'
+            )
         self.load_markets()
         currency = self.safe_currency(code)
         request = {
@@ -1476,7 +1456,7 @@ class bitopro(Exchange, ImplicitAPI):
             params = self.omit(params, ['network'])
             networkId = self.safe_string(networks, requestedNetwork)
             if networkId is None:
-                raise ExchangeError(self.id + ' invalid network ' + requestedNetwork)
+                raise ExchangeError(f'{self.id} invalid network {requestedNetwork}')
             request['protocol'] = networkId
         if tag is not None:
             request['message'] = tag
@@ -1498,23 +1478,23 @@ class bitopro(Exchange, ImplicitAPI):
         return self.parse_transaction(result, currency)
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
-        url = '/' + self.implode_params(path, params)
+        url = f'/{self.implode_params(path, params)}'
         query = self.omit(params, self.extract_params(path))
         if headers is None:
             headers = {}
         headers['X-BITOPRO-API'] = 'ccxt'
         if api == 'private':
             self.check_required_credentials()
-            if method == 'POST' or method == 'PUT':
+            if method in ['POST', 'PUT']:
                 body = self.json(params)
                 payload = self.string_to_base64(body)
                 signature = self.hmac(self.encode(payload), self.encode(self.secret), hashlib.sha384)
                 headers['X-BITOPRO-APIKEY'] = self.apiKey
                 headers['X-BITOPRO-PAYLOAD'] = payload
                 headers['X-BITOPRO-SIGNATURE'] = signature
-            elif method == 'GET' or method == 'DELETE':
+            elif method in ['GET', 'DELETE']:
                 if query:
-                    url += '?' + self.urlencode(query)
+                    url += f'?{self.urlencode(query)}'
                 nonce = self.milliseconds()
                 rawData = {
                     'nonce': nonce,
@@ -1527,7 +1507,7 @@ class bitopro(Exchange, ImplicitAPI):
                 headers['X-BITOPRO-SIGNATURE'] = signature
         elif api == 'public' and method == 'GET':
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         url = self.urls['api']['rest'] + url
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
@@ -1536,7 +1516,7 @@ class bitopro(Exchange, ImplicitAPI):
             return None  # fallback to the default error handler
         if code >= 200 and code < 300:
             return None
-        feedback = self.id + ' ' + body
+        feedback = f'{self.id} {body}'
         error = self.safe_string(response, 'error')
         self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
         self.throw_broadly_matched_exception(self.exceptions['broad'], error, feedback)

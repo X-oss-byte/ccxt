@@ -29,7 +29,7 @@ async def symbol_loop(exchange, symbol):
             orderbooks[exchange.id] = orderbooks.get(exchange.id, {})
             orderbooks[exchange.id][symbol] = orderbook
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 

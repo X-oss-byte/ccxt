@@ -8,7 +8,7 @@ from asyncio import run, gather
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 root_folder = os.path.dirname(os.path.dirname(this_folder))
-sys.path.append(root_folder + '/python')
+sys.path.append(f'{root_folder}/python')
 sys.path.append(this_folder)
 
 # -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ async def fetch_ohlcv(exchange, symbol, timeframe, limit):
                 datetime = exchange.iso8601(first_candle[0])
                 print(datetime, exchange.id, symbol, first_candle[1:])
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
 
 
 async def main():

@@ -17,7 +17,7 @@ async def loop(exchange, symbol, n):
                 print(exchange.iso8601(now), n, symbol, i, orderbook['asks'][0], orderbook['bids'][0])
             i += 1
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             # break  # you can also break just this one loop if it fails
 

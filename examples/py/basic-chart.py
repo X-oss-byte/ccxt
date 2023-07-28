@@ -9,7 +9,7 @@ from asciichart import plot
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 root_folder = os.path.dirname(os.path.dirname(this_folder))
-sys.path.append(root_folder + '/python')
+sys.path.append(f'{root_folder}/python')
 sys.path.append(this_folder)
 
 # -----------------------------------------------------------------------------
@@ -40,8 +40,7 @@ def print_chart(exchange, symbol, timeframe):
     # print the chart
     print("\n" + plot(series[-120:], {'height': 20}))  # print the chart
 
-    last = ohlcv[len(ohlcv) - 1][index]  # last closing price
-    return last
+    return ohlcv[len(ohlcv) - 1][index]
 
 
 last = print_chart(kraken, 'BTC/USD', '1h')

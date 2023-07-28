@@ -2,7 +2,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 # ----------------------------------------------------------------------------
 
@@ -24,13 +24,11 @@ async def example():
     })
     symbol = 'BUSD/USDT'  # set target symbol
     margin_mode = 'isolated'  # margin mode (cross or isolated)
-    collateral_coin = 'USDT'  # which asset you want to use for margin-borrow collateral
     borrow_coin = 'BUSD'  # which coin to borrow
     order_side = 'sell'  # which side to trade
     amount_to_trade = 14  # how many coins to sell
     order_type = 'limit'  # order type (can be market, limit or etc)
     limit_price = 0.99  # price to sell at (set undefined/null/None if market-order)
-    margin_magnitude = 5  # target margin (aka 'leverage'). This might also be obtainable using other unified methods, but for example purposes, we set here manually
     # ########## end of user-inputs ##########
     #
     # for example purposes, let's also check available balance at first
@@ -43,8 +41,10 @@ async def example():
     if amount_to_trade > balance_margin[symbol][borrow_coin]['free']:
         needed_amount_to_borrow = amount_to_trade - balance_margin[symbol][borrow_coin]['free']
         print('hmm, I have only ', balance_margin[symbol][borrow_coin]['free'], ' ', borrow_coin, ' in margin balance, and still need additional ', needed_amount_to_borrow, ' to make an order. Lets borrow it.')
+        margin_magnitude = 5  # target margin (aka 'leverage'). This might also be obtainable using other unified methods, but for example purposes, we set here manually
         # To initate a borrow, at first, check if we have enough collateral (for this example, as we make a sell-short, we need '-1' to keep for collateral currency)
         needed_collateral_amount = needed_amount_to_borrow / (margin_magnitude - 1)
+        collateral_coin = 'USDT'  # which asset you want to use for margin-borrow collateral
         # Check if we have any collateral to get permission for borrow
         if balance_margin[symbol][collateral_coin]['free'] < needed_collateral_amount:
             # If we don't have enough collateral, then let's try to transfer collateral-asset from spot-balance to margin-balance

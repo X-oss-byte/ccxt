@@ -12,7 +12,7 @@ async def print_balance(exchange, market_type):
         try:
             balance = await exchange.watch_balance({'type': market_type})
             pprint(balance)
-            print('balance of ' + market_type, balance)
+            print(f'balance of {market_type}', balance)
             print(exchange.options[market_type])
         except ccxt.BaseError as e:
             print(type(e), e)

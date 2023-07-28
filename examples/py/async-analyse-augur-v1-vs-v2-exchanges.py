@@ -6,7 +6,7 @@ import sys
 from typing import Optional
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt
 
@@ -41,7 +41,7 @@ def is_symbol_match(
                 # then the other currency must contain allowed_infix=REP to be allowed, else disallow
                 return allowed_infix in parts[i + 1 % 2]
 
-    return any([allowed_infix in currency for currency in parts])
+    return any(allowed_infix in currency for currency in parts)
 
 
 async def check_symbol_infix(exchange, symbol_infix, exclude_infix=None):
@@ -51,11 +51,11 @@ async def check_symbol_infix(exchange, symbol_infix, exclude_infix=None):
         # exchange could not load_markets for some reason...
         unchecked_exchanges.append(exchange.id)
     else:
-        matching_symbols = [
-            symbol for symbol in exchange.symbols
+        if matching_symbols := [
+            symbol
+            for symbol in exchange.symbols
             if is_symbol_match(symbol, symbol_infix, exclude_infix)
-        ]
-        if matching_symbols:
+        ]:
             print(
                 f'on exchange {exchange.id} these symbols contain {symbol_infix}:'
             )

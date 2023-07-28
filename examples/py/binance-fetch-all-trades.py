@@ -5,7 +5,7 @@ import sys
 import csv
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -17,9 +17,9 @@ market = exchange.market(symbol)
 one_hour = 3600 * 1000
 since = exchange.parse8601('2018-12-12T00:00:00')
 now = exchange.milliseconds()
-end = exchange.parse8601(exchange.ymd(now) + 'T00:00:00')
+end = exchange.parse8601(f'{exchange.ymd(now)}T00:00:00')
 previous_trade_id = None
-filename = exchange.id + '_' + market['id'] + '.csv'
+filename = f'{exchange.id}_' + market['id'] + '.csv'
 with open(filename, mode="w") as csv_f:
     csv_writer = csv.DictWriter(csv_f, delimiter=",", fieldnames=["timestamp", "size", "price", "side"])
     csv_writer.writeheader()
@@ -44,5 +44,5 @@ with open(filename, mode="w") as csv_f:
             else:
                 since += one_hour
         except ccxt.NetworkError as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
             exchange.sleep(60000)

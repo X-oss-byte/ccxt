@@ -16,7 +16,7 @@ async def main():
         response = await exchange.cancel_all_orders(symbol)
         pprint(response)
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
     await exchange.close()
 
 

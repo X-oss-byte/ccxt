@@ -23,7 +23,7 @@ async def send_discord_webhook_messsage(exchange, symbol, message):
     try:
         await exchange.fetch(url, method, headers, body)
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
 
 
 async def run_ohlcv_loop(exchange, symbol, timeframe, limit):
@@ -47,7 +47,7 @@ async def run_ohlcv_loop(exchange, symbol, timeframe, limit):
                         print(message)
                         ensure_future(send_discord_webhook_messsage(exchange, symbol, message))
         except Exception as e:
-            print(type(e).__name__, str(e))
+            print(type(e).__name__, e)
 
 
 async def main():

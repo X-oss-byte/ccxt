@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -22,8 +22,7 @@ exchange.verbose = True  # uncomment for debugging purposes if necessary
 
 for code in ['TLOS']:  # exchange.currencies.keys():
     response = exchange.public_get_currencies_currency({'currency': code})
-    currency = exchange.safe_value(response, 'data')
-    if currency:
+    if currency := exchange.safe_value(response, 'data'):
         # pprint(currency)
         chains = exchange.safe_value(currency, 'chains')
         for chain in chains:

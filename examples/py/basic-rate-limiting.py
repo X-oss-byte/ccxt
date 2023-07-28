@@ -6,7 +6,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -18,7 +18,7 @@ exchange = ccxt.poloniex({
 })
 
 # print 10 times with appropriate delay
-for i in range(0, 10):
+for _ in range(0, 10):
     print('--------------------------------------------------------------------')
     ticker = exchange.fetch_ticker(symbol)
     ticker = exchange.omit(ticker, 'info')

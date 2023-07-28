@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -13,7 +13,7 @@ import ccxt  # noqa: E402
 def table(values):
     first = values[0]
     keys = list(first.keys()) if isinstance(first, dict) else range(0, len(first))
-    widths = [max([len(str(v[k])) for v in values]) for k in keys]
+    widths = [max(len(str(v[k])) for v in values) for k in keys]
     string = ' | '.join(['{:<' + str(w) + '}' for w in widths])
     return "\n".join([string.format(*[str(v[k]) for k in keys]) for v in values])
 

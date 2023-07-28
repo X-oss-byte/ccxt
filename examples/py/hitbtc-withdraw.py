@@ -6,18 +6,18 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
 
 def get_positive_accounts(balance):
-    result = {}
     currencies = list(balance.keys())
-    for currency in currencies:
-        if balance[currency] and balance[currency] > 0:
-            result[currency] = balance[currency]
-    return result
+    return {
+        currency: balance[currency]
+        for currency in currencies
+        if balance[currency] and balance[currency] > 0
+    }
 
 
 exchange = ccxt.hitbtc({

@@ -5,51 +5,53 @@ from asyncio import run, gather
 def table(values):
     first = values[0]
     keys = list(first.keys()) if isinstance(first, dict) else range(0, len(first))
-    widths = [max([len(str(v[k])) for v in values]) for k in keys]
+    widths = [max(len(str(v[k])) for v in values) for k in keys]
     string = ' | '.join(['{:<' + str(w) + '}' for w in widths])
     return "\n".join([string.format(*[str(v[k]) for k in keys]) for v in values])
 
 
 async def watch_ticker(color, duration, exchange, symbol):
     method = 'watchTicker'
-    if (method in exchange.has) and exchange.has[method]:
-        start = exchange.milliseconds()
-        i = 1
-        while True:
-            ticker = await exchange.watch_ticker(symbol)
-            now = exchange.milliseconds()
-            # start color code
-            print(color, 'Ticker ========================================================================')
-            print(exchange.iso8601(now), symbol, 'iteration:', i, 'last price:', ticker['last'])
-            print('-------------------------------------------------------------------------------')
-            # pprint.pprint(ticker)  # uncomment for a lengthy complete printout
-            print('\x1b[0m')  # stop color code
-            i += 1
-            if (start + duration) < now:
-                break
-    else:
-        raise Exception(exchange.id + ' ' + method + ' is not supported or not implemented yet')
+    if method not in exchange.has or not exchange.has[method]:
+        raise Exception(
+            f'{exchange.id} {method} is not supported or not implemented yet'
+        )
+    start = exchange.milliseconds()
+    i = 1
+    while True:
+        ticker = await exchange.watch_ticker(symbol)
+        now = exchange.milliseconds()
+        # start color code
+        print(color, 'Ticker ========================================================================')
+        print(exchange.iso8601(now), symbol, 'iteration:', i, 'last price:', ticker['last'])
+        print('-------------------------------------------------------------------------------')
+        # pprint.pprint(ticker)  # uncomment for a lengthy complete printout
+        print('\x1b[0m')  # stop color code
+        i += 1
+        if (start + duration) < now:
+            break
 
 
 async def watch_ohlcv(color, duration, exchange, symbol, timeframe, limit):
     method = 'watchOHLCV'
-    if (method in exchange.has) and exchange.has[method]:
-        start = exchange.milliseconds()
-        i = 1
-        while True:
-            ohlcvs = await exchange.watch_ohlcv(symbol, timeframe, None, limit)
-            now = exchange.milliseconds()
-            # start color code
-            print(color, 'OHLCV =========================================================================')
-            print(exchange.iso8601(now), symbol, timeframe, 'iteration:', i)
-            print('-------------------------------------------------------------------------------')
-            print(table([[exchange.iso8601(o[0])] + o[1:] for o in ohlcvs]))
-            print('\x1b[0m')  # stop color code
-            i += 1
-            if (start + duration) < now:
-                break
-    else:
-        raise Exception(exchange.id + ' ' + method + ' is not supported or not implemented yet')
+    if method not in exchange.has or not exchange.has[method]:
+        raise Exception(
+            f'{exchange.id} {method} is not supported or not implemented yet'
+        )
+    start = exchange.milliseconds()
+    i = 1
+    while True:
+        ohlcvs = await exchange.watch_ohlcv(symbol, timeframe, None, limit)
+        now = exchange.milliseconds()
+        # start color code
+        print(color, 'OHLCV =========================================================================')
+        print(exchange.iso8601(now), symbol, timeframe, 'iteration:', i)
+        print('-------------------------------------------------------------------------------')
+        print(table([[exchange.iso8601(o[0])] + o[1:] for o in ohlcvs]))
+        print('\x1b[0m')  # stop color code
+        i += 1
+        if (start + duration) < now:
+            break
 
 
 # =============================================================================

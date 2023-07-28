@@ -33,6 +33,6 @@ while True:
             print(df[-20:])
             print(exchange.iso8601 (exchange.milliseconds()))
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
 
 

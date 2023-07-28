@@ -12,7 +12,7 @@ import asyncio
 # ------------------------------------------------------------------------------
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 # ------------------------------------------------------------------------------
 import ccxt.pro as ccxtpro
@@ -20,11 +20,8 @@ import ccxt.async_support as ccxt  # noqa: E402
 
 # ------------------------------------------------------------------------------
 
-print('Python v' + platform.python_version())
-print('CCXT v' + ccxt.__version__)
-
-# ------------------------------------------------------------------------------
-
+print(f'Python v{platform.python_version()}')
+print(f'CCXT v{ccxt.__version__}')
 
 class Argv(object):
 
@@ -72,7 +69,7 @@ parser.parse_args(namespace=argv)
 def table(values):
     first = values[0]
     keys = list(first.keys()) if isinstance(first, dict) else range(0, len(first))
-    widths = [max([len(str(v[k])) for v in values]) for k in keys]
+    widths = [max(len(str(v[k])) for v in values) for k in keys]
     string = ' | '.join(['{:<' + str(w) + '}' for w in widths])
     return "\n".join([string.format(*[str(v[k]) for k in keys]) for v in values])
 
@@ -89,11 +86,14 @@ def print_supported_exchanges():
 def print_usage():
     print('\nThis is an example of a basic command-line interface to all exchanges\n')
     print('Usage:\n')
-    print('python ' + sys.argv[0] + ' exchange_id method "param1" param2 "param3" param4 ...\n')
+    print(
+        f'python {sys.argv[0]}'
+        + ' exchange_id method "param1" param2 "param3" param4 ...\n'
+    )
     print('Examples:\n')
-    print('python ' + sys.argv[0] + ' okcoin fetch_ohlcv BTC/USD 15m')
-    print('python ' + sys.argv[0] + ' bitfinex fetch_balance')
-    print('python ' + sys.argv[0] + ' kraken fetch_order_book ETH/BTC\n')
+    print(f'python {sys.argv[0]} okcoin fetch_ohlcv BTC/USD 15m')
+    print(f'python {sys.argv[0]} bitfinex fetch_balance')
+    print(f'python {sys.argv[0]}' + ' kraken fetch_order_book ETH/BTC\n')
     print_supported_exchanges()
 
 
@@ -101,8 +101,8 @@ def print_usage():
 
 async def main():
     # prefer local testing keys to global keys
-    keys_global = root + '/keys.json'
-    keys_local = root + '/keys.local.json'
+    keys_global = f'{root}/keys.json'
+    keys_local = f'{root}/keys.local.json'
     keys_file = keys_local if os.path.exists(keys_local) else keys_global
 
     # load the api keys and other settings from a JSON config
@@ -117,7 +117,7 @@ async def main():
     if not argv.exchange_id:
         print_usage()
         sys.exit()
-    
+
     # check here if we have a arg like this: binance.fetchOrders()
     call_reg = "\s*(\w+)\s*\.\s*(\w+)\s*\(([^()]*)\)"
     match = re.match(call_reg, argv.exchange_id)
@@ -131,10 +131,10 @@ async def main():
 
     if argv.exchange_id not in ccxt.exchanges:
         print_usage()
-        raise Exception('Exchange "' + argv.exchange_id + '" not found.')
+        raise Exception(f'Exchange "{argv.exchange_id}" not found.')
 
     if argv.exchange_id in keys:
-        config.update(keys[argv.exchange_id])
+        config |= keys[argv.exchange_id]
 
     exchange = None
     if (argv.exchange_id in ccxtpro.exchanges):
@@ -155,7 +155,7 @@ async def main():
     requiredCredentials = exchange.requiredCredentials
     for credential, isRequired in requiredCredentials.items():
         if isRequired and credential and not getattr(exchange, credential, None):
-            credentialEnvName = (argv.exchange_id + '_' + credential).upper()  # example: KRAKEN_APIKEY
+            credentialEnvName = f'{argv.exchange_id}_{credential}'.upper()
             if credentialEnvName in os.environ:
                 credentialValue = os.environ[credentialEnvName]
                 setattr(exchange, credential, credentialValue)
@@ -173,7 +173,7 @@ async def main():
     for arg in argv.args:
 
         # unpack json objects (mostly for extra params)
-        if arg[0] == '{' or arg[0] == '[':
+        if arg[0] in ['{', '[']:
             args.append(json.loads(arg))
         elif arg == 'None':
             args.append(None)
@@ -192,7 +192,7 @@ async def main():
     if argv.verbose and argv.debug:
         exchange.verbose = argv.verbose
 
-    markets_path = '.cache/' + exchange.id + '-markets.json'
+    markets_path = f'.cache/{exchange.id}-markets.json'
     if os.path.exists(markets_path):
         with open(markets_path, 'r') as f:
             exchange.markets = json.load(f)

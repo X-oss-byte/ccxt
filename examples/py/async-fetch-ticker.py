@@ -6,7 +6,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 

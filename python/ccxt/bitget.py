@@ -1054,12 +1054,20 @@ class bitget(Exchange, ImplicitAPI):
                     subTypes = ['sumcbl', 'sdmcbl', 'scmcbl']
                 else:
                     subTypes = ['umcbl', 'dmcbl', 'cmcbl']
-                for j in range(0, len(subTypes)):
-                    promises.append(self.fetch_markets_by_type(type, self.extend(params, {
-                        'productType': subTypes[j],
-                    })))
+                promises.extend(
+                    self.fetch_markets_by_type(
+                        type,
+                        self.extend(
+                            params,
+                            {
+                                'productType': subTypes[j],
+                            },
+                        ),
+                    )
+                    for j in range(0, len(subTypes))
+                )
             else:
-                promises.append(self.fetch_markets_by_type(types[i], params))
+                promises.append(self.fetch_markets_by_type(type, params))
         promises = promises
         result = promises[0]
         for i in range(1, len(promises)):
@@ -1067,10 +1075,7 @@ class bitget(Exchange, ImplicitAPI):
         return result
 
     def parse_markets(self, markets):
-        result = []
-        for i in range(0, len(markets)):
-            result.append(self.parse_market(markets[i]))
-        return result
+        return [self.parse_market(markets[i]) for i in range(0, len(markets))]
 
     def parse_market(self, market):
         #
@@ -1121,7 +1126,7 @@ class bitget(Exchange, ImplicitAPI):
         supportMarginCoins = self.safe_value(market, 'supportMarginCoins', [])
         settleId = self.safe_string(supportMarginCoins, 0)
         settle = self.safe_currency_code(settleId)
-        symbol = base + '/' + quote
+        symbol = f'{base}/{quote}'
         parts = marketId.split('_')
         typeId = self.safe_string(parts, 1)
         type = None
@@ -1143,20 +1148,20 @@ class bitget(Exchange, ImplicitAPI):
         else:
             expiryString = self.safe_string(parts, 2)
             if expiryString is not None:
-                year = '20' + expiryString[0:2]
+                year = f'20{expiryString[:2]}'
                 month = expiryString[2:4]
                 day = expiryString[4:6]
-                expiryDatetime = year + '-' + month + '-' + day + 'T00:00:00.000Z'
+                expiryDatetime = f'{year}-{month}-{day}T00:00:00.000Z'
                 expiry = self.parse8601(expiryDatetime)
                 type = 'future'
                 future = True
-                symbol = symbol + ':' + settle + '-' + expiryString
+                symbol = f'{symbol}:{settle}-{expiryString}'
             else:
                 type = 'swap'
                 swap = True
-                symbol = symbol + ':' + settle
+                symbol = f'{symbol}:{settle}'
             contract = True
-            linear = (typeId == 'UMCBL') or (typeId == 'CMCBL') or (typeId == 'SUMCBL') or (typeId == 'SCMCBL')
+            linear = typeId in ['UMCBL', 'CMCBL', 'SUMCBL', 'SCMCBL']
             inverse = not linear
             priceDecimals = self.safe_integer(market, 'pricePlace')
             amountDecimals = self.safe_integer(market, 'volumePlace')
@@ -1173,12 +1178,8 @@ class bitget(Exchange, ImplicitAPI):
             amountString = str(preciseAmount)
             amountPrecision = self.parse_number(amountString)
         status = self.safe_string_2(market, 'status', 'symbolStatus')
-        active = None
-        if status is not None:
-            active = (status == 'online' or status == 'normal')
-        minCost = None
-        if quote == 'USDT':
-            minCost = self.safe_number(market, 'minTradeUSDT')
+        active = status in ['online', 'normal'] if status is not None else None
+        minCost = self.safe_number(market, 'minTradeUSDT') if quote == 'USDT' else None
         contractSize = 1 if contract else None
         return {
             'id': marketId,
@@ -1387,13 +1388,13 @@ class bitget(Exchange, ImplicitAPI):
         :returns dict: a `leverage tiers structure <https://docs.ccxt.com/#/?id=leverage-tiers-structure>`
         """
         self.load_markets()
-        request = {}
         market = None
         market = self.market(symbol)
         if market['spot']:
-            raise BadRequest(self.id + ' fetchMarketLeverageTiers() symbol does not support market ' + symbol)
-        request['symbol'] = market['id']
-        request['productType'] = 'UMCBL'
+            raise BadRequest(
+                f'{self.id} fetchMarketLeverageTiers() symbol does not support market {symbol}'
+            )
+        request = {'symbol': market['id'], 'productType': 'UMCBL'}
         response = self.publicMixGetMarketQueryPositionLever(self.extend(request, params))
         #
         #     {
@@ -1456,7 +1457,9 @@ class bitget(Exchange, ImplicitAPI):
         """
         self.load_markets()
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchDeposits() requires a `code` argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchDeposits() requires a `code` argument'
+            )
         currency = self.currency(code)
         if since is None:
             since = self.milliseconds() - 31556952000  # 1yr
@@ -1508,7 +1511,9 @@ class bitget(Exchange, ImplicitAPI):
         chain = self.safe_string_2(params, 'chain', 'network')
         params = self.omit(params, ['network'])
         if chain is None:
-            raise ArgumentsRequired(self.id + ' withdraw() requires a chain parameter or a network parameter')
+            raise ArgumentsRequired(
+                f'{self.id} withdraw() requires a chain parameter or a network parameter'
+            )
         self.load_markets()
         currency = self.currency(code)
         networkId = self.network_code_to_id(chain)
@@ -1550,8 +1555,9 @@ class bitget(Exchange, ImplicitAPI):
             'fee': None,
         }
         withdrawOptions = self.safe_value(self.options, 'withdraw', {})
-        fillResponseFromRequest = self.safe_value(withdrawOptions, 'fillResponseFromRequest', True)
-        if fillResponseFromRequest:
+        if fillResponseFromRequest := self.safe_value(
+            withdrawOptions, 'fillResponseFromRequest', True
+        ):
             result['currency'] = code
             result['timestamp'] = self.milliseconds()
             result['datetime'] = self.iso8601(self.milliseconds())
@@ -1576,7 +1582,9 @@ class bitget(Exchange, ImplicitAPI):
         """
         self.load_markets()
         if code is None:
-            raise ArgumentsRequired(self.id + ' fetchWithdrawals() requires a `code` argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchWithdrawals() requires a `code` argument'
+            )
         currency = self.currency(code)
         if since is None:
             since = self.milliseconds() - 31556952000  # 1yr
@@ -1794,7 +1802,7 @@ class bitget(Exchange, ImplicitAPI):
             # spot symbol are different from the "request id"
             # so we need to convert it to the exchange-specific id
             # otherwise we will not be able to find the market
-            marketId = marketId + '_SPBL'
+            marketId = f'{marketId}_SPBL'
         symbol = self.safe_symbol(marketId, market)
         high = self.safe_string(ticker, 'high24h')
         low = self.safe_string(ticker, 'low24h')
@@ -1892,7 +1900,7 @@ class bitget(Exchange, ImplicitAPI):
             subType, params = self.handle_sub_type_and_params('fetchTickers', None, params)
             productType = 'UMCBL' if (subType == 'linear') else 'DMCBL'
             if sandboxMode:
-                productType = 'S' + productType
+                productType = f'S{productType}'
             request['productType'] = productType
         extended = self.extend(request, params)
         response = None
@@ -2280,7 +2288,7 @@ class bitget(Exchange, ImplicitAPI):
             subType, params = self.handle_sub_type_and_params('fetchBalance', None, params)
             productType = 'UMCBL' if (subType == 'linear') else 'DMCBL'
             if sandboxMode:
-                productType = 'S' + productType
+                productType = f'S{productType}'
             request['productType'] = productType
         response = getattr(self, method)(self.extend(request, query))
         # spot
@@ -2437,9 +2445,9 @@ class bitget(Exchange, ImplicitAPI):
         type = self.safe_string(order, 'orderType')
         timestamp = self.safe_integer(order, 'cTime')
         side = self.safe_string_2(order, 'side', 'posSide')
-        if (side == 'open_long') or (side == 'close_short'):
+        if side in ['open_long', 'close_short']:
             side = 'buy'
-        elif (side == 'close_long') or (side == 'open_short'):
+        elif side in ['close_long', 'open_short']:
             side = 'sell'
         clientOrderId = self.safe_string_2(order, 'clientOrderId', 'clientOid')
         fee = None

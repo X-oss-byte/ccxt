@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -84,10 +84,10 @@ try:
 
     else:
 
-        dump('Exchange ' + red(id) + ' not found')
+        dump(f'Exchange {red(id)} not found')
         print_supported_exchanges()
 
 except Exception as e:
-    dump('[' + type(e).__name__ + ']', str(e))
-    dump("Usage: python " + sys.argv[0], green('id'))
+    dump(f'[{type(e).__name__}]', str(e))
+    dump(f"Usage: python {sys.argv[0]}", green('id'))
     print_supported_exchanges()

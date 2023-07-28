@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -37,11 +37,13 @@ if not exchange.has['fetchDepositAddress']:
 
 try:
 
-    print('Trying to fetch deposit address for ' + currency_code + ' from ' + exchange_id + '...')
+    print(
+        f'Trying to fetch deposit address for {currency_code} from {exchange_id}...'
+    )
 
     fetch_result = exchange.fetch_deposit_address(currency_code)
 
-    print('Successfully fetched deposit address for ' + currency_code)
+    print(f'Successfully fetched deposit address for {currency_code}')
     pprint(fetch_result)
 
 except ccxt.InvalidAddress as e:
@@ -49,11 +51,11 @@ except ccxt.InvalidAddress as e:
     # never skip proper error handling, whatever it is you're building
     # actually, with crypto error handling should be the largest part of your code
 
-    print('The address for ' + currency_code + ' does not exist yet')
+    print(f'The address for {currency_code} does not exist yet')
 
     if exchange.has['createDepositAddress']:
 
-        print('Attempting to create a deposit address for ' + currency_code + '...')
+        print(f'Attempting to create a deposit address for {currency_code}...')
 
         try:
 
@@ -61,22 +63,32 @@ except ccxt.InvalidAddress as e:
 
             # pprint(create_result)  # for debugging
 
-            print('Successfully created a deposit address for ' + currency_code + ', fetching the deposit address now...')
+            print(
+                f'Successfully created a deposit address for {currency_code}, fetching the deposit address now...'
+            )
 
             try:
 
                 fetch_result = exchange.fetch_deposit_address(currency_code)
 
-                print('Successfully fetched deposit address for ' + currency_code)
+                print(f'Successfully fetched deposit address for {currency_code}')
                 pprint(fetch_result)
 
             except Exception as e:
 
-                print('Failed to fetch deposit address for ' + currency_code, type(e).__name__, str(e))
+                print(
+                    f'Failed to fetch deposit address for {currency_code}',
+                    type(e).__name__,
+                    e,
+                )
 
         except Exception as e:
 
-                print('Failed to create deposit address for ' + currency_code, type(e).__name__, str(e))
+            print(
+                f'Failed to create deposit address for {currency_code}',
+                type(e).__name__,
+                e,
+            )
 
     else:
 
@@ -84,4 +96,8 @@ except ccxt.InvalidAddress as e:
 
 except Exception as e:
 
-    print('There was an error while fetching deposit address for ' + currency_code, type(e).__name__, str(e))
+    print(
+        f'There was an error while fetching deposit address for {currency_code}',
+        type(e).__name__,
+        e,
+    )

@@ -4,7 +4,7 @@ import os
 import sys
 import time
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -50,10 +50,10 @@ def print_exchanges():
 
 
 def print_usage():
-    dump("Usage: python " + sys.argv[0], green('id'), yellow('[symbol]'))
+    dump(f"Usage: python {sys.argv[0]}", green('id'), yellow('[symbol]'))
     dump("Symbol is optional, for example:")
-    dump("python " + sys.argv[0], green('kraken'))
-    dump("python " + sys.argv[0], green('coinbasepro'), yellow('BTC/USD'))
+    dump(f"python {sys.argv[0]}", green('kraken'))
+    dump(f"python {sys.argv[0]}", green('coinbasepro'), yellow('BTC/USD'))
     print_exchanges()
 
 
@@ -121,10 +121,10 @@ try:
         except ccxt.AuthenticationError as e:
             print(type(e).__name__, e.args, 'Authentication Error (missing API keys, ignoring)')
     else:
-        dump('Exchange ' + red(id) + ' not found')
+        dump(f'Exchange {red(id)} not found')
         print_usage()
 
 except Exception as e:
 
-    print(type(e).__name__, e.args, str(e))
+    print(type(e).__name__, e.args, e)
     print_usage()

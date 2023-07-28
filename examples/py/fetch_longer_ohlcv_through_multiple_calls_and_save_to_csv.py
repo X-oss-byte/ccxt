@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 print('CCXT Version:', ccxt.__version__)
 
@@ -42,7 +42,7 @@ ohlcv = []
 while start < now:
     candles = exchange.fetch_ohlcv(symbol, timeframe, start, max_candles)
     ohlcv += candles
-    start = start + (ms_per_candle[timeframe] * max_candles)
+    start += ms_per_candle[timeframe] * max_candles
 
 # write to csv
 np.savetxt(

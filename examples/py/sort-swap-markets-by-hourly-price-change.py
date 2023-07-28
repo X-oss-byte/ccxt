@@ -11,7 +11,7 @@ from datetime import datetime
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 root_folder = os.path.dirname(os.path.dirname(this_folder))
-sys.path.append(root_folder + '/python')
+sys.path.append(f'{root_folder}/python')
 sys.path.append(this_folder)
 
 # -----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ async def main():
 
     print('python', sys.version)
     print('CCXT Version:', ccxt.__version__)
-    print(now + ' iteration 0 passed in ' + duration + ' ms')
+    print(f'{now} iteration 0 passed in {duration} ms')
     print()
     pprint(priceChanges)
 

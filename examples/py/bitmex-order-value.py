@@ -4,7 +4,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -39,6 +39,6 @@ while True:
             decimals = units[unit]['decimals']
             name = units[unit]['name']
             rounded_value = exchange.decimal_to_precision(value * multiplier, ccxt.ROUND, decimals)  # alternatively, use ccxt.TRUNCATE here
-            print(num_contracts, symbol, 'contracts =', rounded_value, unit, '(' + name + ')')
+            print(num_contracts, symbol, 'contracts =', rounded_value, unit, f'({name})')
     except Exception as e:
         pass

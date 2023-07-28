@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -29,5 +29,5 @@ while True:
         if 'accessToken' in error_message:
             exchange.sign_in()
         else:
-            print(str(e))
+            print(e)
             sys.exit()

@@ -5,7 +5,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -22,7 +22,7 @@ async def test():
         await exchange.close()
         return orderbook
     except ccxt.BaseError as e:
-        print(type(e).__name__, str(e), str(e.args))
+        print(type(e).__name__, e, e.args)
         raise e
 
 

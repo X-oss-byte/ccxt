@@ -199,7 +199,7 @@ class bit2c(Exchange, ImplicitAPI):
             currency = self.currency(code)
             uppercase = currency['id'].upper()
             if uppercase in response:
-                account['free'] = self.safe_string(response, 'AVAILABLE_' + uppercase)
+                account['free'] = self.safe_string(response, f'AVAILABLE_{uppercase}')
                 account['total'] = self.safe_string(response, uppercase)
             result[code] = account
         return self.safe_balance(result)
@@ -411,7 +411,7 @@ class bit2c(Exchange, ImplicitAPI):
             'Pair': market['id'],
         }
         if type == 'market':
-            method += 'MarketPrice' + self.capitalize(side)
+            method += f'MarketPrice{self.capitalize(side)}'
         else:
             request['Price'] = price
             request['Total'] = amount * price
@@ -442,7 +442,9 @@ class bit2c(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOpenOrders() requires a symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchOpenOrders() requires a symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -532,13 +534,13 @@ class bit2c(Exchange, ImplicitAPI):
         status = None
         if isNewOrder:
             tempStatus = self.safe_integer(orderUnified, 'status_type')
-            if tempStatus == 0 or tempStatus == 1:
+            if tempStatus in [0, 1]:
                 status = 'open'
             elif tempStatus == 5:
                 status = 'closed'
         else:
             tempStatus = self.safe_string(orderUnified, 'status')
-            if tempStatus == 'New' or tempStatus == 'Open':
+            if tempStatus in ['New', 'Open']:
                 status = 'open'
             elif tempStatus == 'Completed':
                 status = 'closed'
@@ -561,10 +563,9 @@ class bit2c(Exchange, ImplicitAPI):
         remaining = None
         if isNewOrder:
             amount = self.safe_string(orderUnified, 'amount')  # NOTE:'initialAmount' is currently not set on new order
-            remaining = self.safe_string(orderUnified, 'amount')
         else:
             amount = self.safe_string(orderUnified, 'initialAmount')
-            remaining = self.safe_string(orderUnified, 'amount')
+        remaining = self.safe_string(orderUnified, 'amount')
         return self.safe_order({
             'id': id,
             'clientOrderId': None,
@@ -653,11 +654,8 @@ class bit2c(Exchange, ImplicitAPI):
         return self.parse_trades(response, market, since, limit)
 
     def remove_comma_from_value(self, str):
-        newString = ''
         strParts = str.split(',')
-        for i in range(0, len(strParts)):
-            newString += strParts[i]
-        return newString
+        return ''.join(strParts[i] for i in range(0, len(strParts)))
 
     def parse_trade(self, trade, market=None):
         #
@@ -732,10 +730,7 @@ class bit2c(Exchange, ImplicitAPI):
             amount = self.safe_string(trade, 'amount')
             side = self.safe_value(trade, 'isBid')
             if side is not None:
-                if side:
-                    side = 'buy'
-                else:
-                    side = 'sell'
+                side = 'buy' if side else 'sell'
         market = self.safe_market(None, market)
         return self.safe_trade({
             'info': trade,
@@ -766,7 +761,9 @@ class bit2c(Exchange, ImplicitAPI):
         self.load_markets()
         currency = self.currency(code)
         if self.is_fiat(code):
-            raise NotSupported(self.id + ' fetchDepositAddress() does not support fiat currencies')
+            raise NotSupported(
+                f'{self.id} fetchDepositAddress() does not support fiat currencies'
+            )
         request = {
             'Coin': currency['id'],
         }
@@ -813,7 +810,7 @@ class bit2c(Exchange, ImplicitAPI):
             auth = self.urlencode(query)
             if method == 'GET':
                 if query:
-                    url += '?' + auth
+                    url += f'?{auth}'
             else:
                 body = auth
             signature = self.hmac(self.encode(auth), self.encode(self.secret), hashlib.sha512, 'base64')
@@ -836,7 +833,7 @@ class bit2c(Exchange, ImplicitAPI):
         if error is None:
             error = self.safe_string(response, 'Error')
         if error is not None:
-            feedback = self.id + ' ' + body
+            feedback = f'{self.id} {body}'
             self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], error, feedback)
             raise ExchangeError(feedback)  # unknown message

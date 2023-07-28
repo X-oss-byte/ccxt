@@ -33,7 +33,7 @@ async def symbol_loop(exchange, symbol):
             #
             handle_all_orderbooks(orderbooks)
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 

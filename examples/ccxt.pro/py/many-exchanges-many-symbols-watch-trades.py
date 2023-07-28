@@ -12,7 +12,7 @@ async def symbol_loop(exchange, symbol):
             now = exchange.milliseconds()
             print(exchange.iso8601(now), exchange.id, symbol, len(trades), trades[-1]['price'])
         except Exception as e:
-            print(str(e))
+            print(e)
             # raise e  # uncomment to break all loops in case of an error in any one of them
             break  # you can break just this one loop if it fails
 

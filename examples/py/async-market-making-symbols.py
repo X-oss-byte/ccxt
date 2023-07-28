@@ -6,7 +6,7 @@ import os
 import sys
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt.async_support as ccxt  # noqa: E402
 
@@ -16,11 +16,12 @@ async def load_markets(exchange):
     try:
         await exchange.load_markets()
         print('Loaded', len(exchange.symbols), exchange.id, 'symbols')
-        results = []
-        for market in exchange.markets.values():
-            if market['maker'] <= 0:
-                results.append({'exchange': exchange.id, 'symbol': market['symbol']})
-        if len(results) < 1:
+        results = [
+            {'exchange': exchange.id, 'symbol': market['symbol']}
+            for market in exchange.markets.values()
+            if market['maker'] <= 0
+        ]
+        if not results:
             results = None
     except:
         results = None

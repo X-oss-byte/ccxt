@@ -199,7 +199,7 @@ class ace(Exchange, ImplicitAPI):
             baseCode = self.safe_currency_code(base)
             quote = self.safe_string(market, 'quote')
             quoteCode = self.safe_currency_code(quote)
-            symbol = base + '/' + quote
+            symbol = f'{base}/{quote}'
             result.append({
                 'id': self.safe_string(market, 'symbol'),
                 'uppercaseId': None,
@@ -534,7 +534,7 @@ class ace(Exchange, ImplicitAPI):
             quoteId = self.safe_string(order, 'quoteCurrencyName')
             baseId = self.safe_string(order, 'baseCurrencyName')
             if quoteId is not None and baseId is not None:
-                symbol = baseId + '/' + quoteId
+                symbol = f'{baseId}/{quoteId}'
             orderType = self.safe_number(order, 'type')
             if orderType is not None:
                 type = 'limit' if (orderType == 1) else 'market'
@@ -616,16 +616,7 @@ class ace(Exchange, ImplicitAPI):
         request = {
             'orderNo': id,
         }
-        response = self.privatePostV2OrderCancel(self.extend(request, params))
-        #
-        #     {
-        #         "attachment": 200,
-        #         "message": null,
-        #         "parameters": null,
-        #         "status": 200
-        #     }
-        #
-        return response
+        return self.privatePostV2OrderCancel(self.extend(request, params))
 
     def fetch_order(self, id: str, symbol: Optional[str] = None, params={}):
         """
@@ -676,7 +667,9 @@ class ace(Exchange, ImplicitAPI):
         :returns [dict]: a list of `order structures <https://docs.ccxt.com/#/?id=order-structure>`
         """
         if symbol is None:
-            raise ArgumentsRequired(self.id + ' fetchOpenOrders() requires the symbol argument')
+            raise ArgumentsRequired(
+                f'{self.id} fetchOpenOrders() requires the symbol argument'
+            )
         self.load_markets()
         market = self.market(symbol)
         request = {
@@ -765,7 +758,7 @@ class ace(Exchange, ImplicitAPI):
         quoteId = self.safe_string(trade, 'quoteCurrencyName')
         baseId = self.safe_string(trade, 'baseCurrencyName')
         if quoteId is not None and baseId is not None:
-            symbol = baseId + '/' + quoteId
+            symbol = f'{baseId}/{quoteId}'
         side = None
         tradeSide = self.safe_number(trade, 'buyOrSell')
         if tradeSide is not None:
@@ -962,14 +955,14 @@ class ace(Exchange, ImplicitAPI):
         return self.parse_balance(balances)
 
     def sign(self, path, api='public', method='GET', params={}, headers=None, body=None):
-        url = '/' + self.implode_params(path, params)
+        url = f'/{self.implode_params(path, params)}'
         query = self.omit(params, self.extract_params(path))
         if headers is None:
             headers = {}
         if api == 'private':
             self.check_required_credentials()
             nonce = self.milliseconds()
-            auth = 'ACE_SIGN' + self.secret
+            auth = f'ACE_SIGN{self.secret}'
             data = self.extend({
                 'apiKey': self.apiKey,
                 'timeStamp': nonce,
@@ -991,14 +984,14 @@ class ace(Exchange, ImplicitAPI):
             body = self.urlencode(data)
         elif api == 'public' and method == 'GET':
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         url = self.urls['api'][api] + url
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
     def handle_errors(self, code, reason, url, method, headers, body, response, requestHeaders, requestBody):
         if response is None:
             return None  # fallback to the default error handler
-        feedback = self.id + ' ' + body
+        feedback = f'{self.id} {body}'
         status = self.safe_number(response, 'status', 200)
         if status > 200:
             self.throw_exactly_matched_exception(self.exceptions['exact'], status, feedback)

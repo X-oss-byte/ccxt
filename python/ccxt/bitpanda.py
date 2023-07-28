@@ -384,58 +384,68 @@ class bitpanda(Exchange, ImplicitAPI):
             quoteAsset = self.safe_value(market, 'quote', {})
             baseId = self.safe_string(baseAsset, 'code')
             quoteId = self.safe_string(quoteAsset, 'code')
-            id = baseId + '_' + quoteId
+            id = f'{baseId}_{quoteId}'
             base = self.safe_currency_code(baseId)
             quote = self.safe_currency_code(quoteId)
             state = self.safe_string(market, 'state')
-            result.append({
-                'id': id,
-                'symbol': base + '/' + quote,
-                'base': base,
-                'quote': quote,
-                'settle': None,
-                'baseId': baseId,
-                'quoteId': quoteId,
-                'settleId': None,
-                'type': 'spot',
-                'spot': True,
-                'margin': False,
-                'swap': False,
-                'future': False,
-                'option': False,
-                'active': (state == 'ACTIVE'),
-                'contract': False,
-                'linear': None,
-                'inverse': None,
-                'contractSize': None,
-                'expiry': None,
-                'expiryDatetime': None,
-                'strike': None,
-                'optionType': None,
-                'precision': {
-                    'amount': self.parse_number(self.parse_precision(self.safe_string(market, 'amount_precision'))),
-                    'price': self.parse_number(self.parse_precision(self.safe_string(market, 'market_precision'))),
-                },
-                'limits': {
-                    'leverage': {
-                        'min': None,
-                        'max': None,
+            result.append(
+                {
+                    'id': id,
+                    'symbol': f'{base}/{quote}',
+                    'base': base,
+                    'quote': quote,
+                    'settle': None,
+                    'baseId': baseId,
+                    'quoteId': quoteId,
+                    'settleId': None,
+                    'type': 'spot',
+                    'spot': True,
+                    'margin': False,
+                    'swap': False,
+                    'future': False,
+                    'option': False,
+                    'active': state == 'ACTIVE',
+                    'contract': False,
+                    'linear': None,
+                    'inverse': None,
+                    'contractSize': None,
+                    'expiry': None,
+                    'expiryDatetime': None,
+                    'strike': None,
+                    'optionType': None,
+                    'precision': {
+                        'amount': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'amount_precision')
+                            )
+                        ),
+                        'price': self.parse_number(
+                            self.parse_precision(
+                                self.safe_string(market, 'market_precision')
+                            )
+                        ),
                     },
-                    'amount': {
-                        'min': None,
-                        'max': None,
+                    'limits': {
+                        'leverage': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'amount': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'price': {
+                            'min': None,
+                            'max': None,
+                        },
+                        'cost': {
+                            'min': self.safe_number(market, 'min_size'),
+                            'max': None,
+                        },
                     },
-                    'price': {
-                        'min': None,
-                        'max': None,
-                    },
-                    'cost': {
-                        'min': self.safe_number(market, 'min_size'),
-                        'max': None,
-                    },
-                },
-                'info': market,
-            })
+                    'info': market,
+                }
+            )
         return result
 
     def fetch_trading_fees(self, params={}):
@@ -996,9 +1006,7 @@ class bitpanda(Exchange, ImplicitAPI):
         return self.parse_balance(response)
 
     def parse_deposit_address(self, depositAddress, currency=None):
-        code = None
-        if currency is not None:
-            code = currency['code']
+        code = currency['code'] if currency is not None else None
         address = self.safe_string(depositAddress, 'address')
         tag = self.safe_string(depositAddress, 'destination_tag')
         self.check_address(address)
@@ -1079,7 +1087,9 @@ class bitpanda(Exchange, ImplicitAPI):
         if since is not None:
             to = self.safe_string(params, 'to')
             if to is None:
-                raise ArgumentsRequired(self.id + ' fetchDeposits() requires a "to" iso8601 string param with the since argument is specified')
+                raise ArgumentsRequired(
+                    f'{self.id} fetchDeposits() requires a "to" iso8601 string param with the since argument is specified'
+                )
             request['from'] = self.iso8601(since)
         response = self.privateGetAccountDeposits(self.extend(request, params))
         #
@@ -1137,7 +1147,9 @@ class bitpanda(Exchange, ImplicitAPI):
         if since is not None:
             to = self.safe_string(params, 'to')
             if to is None:
-                raise ArgumentsRequired(self.id + ' fetchWithdrawals() requires a "to" iso8601 string param with the since argument is specified')
+                raise ArgumentsRequired(
+                    f'{self.id} fetchWithdrawals() requires a "to" iso8601 string param with the since argument is specified'
+                )
             request['from'] = self.iso8601(since)
         response = self.privateGetAccountWithdrawals(self.extend(request, params))
         #
@@ -1203,7 +1215,9 @@ class bitpanda(Exchange, ImplicitAPI):
         if isFiat:
             payoutAccountId = self.safe_string(params, 'payout_account_id')
             if payoutAccountId is None:
-                raise ArgumentsRequired(self.id + ' withdraw() requires a payout_account_id param for fiat ' + code + ' withdrawals')
+                raise ArgumentsRequired(
+                    f'{self.id} withdraw() requires a payout_account_id param for fiat {code} withdrawals'
+                )
         else:
             recipient = {'address': address}
             if tag is not None:
@@ -1462,13 +1476,13 @@ class bitpanda(Exchange, ImplicitAPI):
             # "is_post_only": False,  # limit orders only, optional
             # "trigger_price": "1234.5678"  # required for stop orders
         }
-        priceIsRequired = False
-        if uppercaseType == 'LIMIT' or uppercaseType == 'STOP':
-            priceIsRequired = True
+        priceIsRequired = uppercaseType in ['LIMIT', 'STOP']
         if uppercaseType == 'STOP':
             triggerPrice = self.safe_number(params, 'trigger_price')
             if triggerPrice is None:
-                raise ArgumentsRequired(self.id + ' createOrder() requires a trigger_price param for ' + type + ' orders')
+                raise ArgumentsRequired(
+                    f'{self.id} createOrder() requires a trigger_price param for {type} orders'
+                )
             request['trigger_price'] = self.price_to_precision(symbol, triggerPrice)
             params = self.omit(params, 'trigger_price')
         if priceIsRequired:
@@ -1513,11 +1527,7 @@ class bitpanda(Exchange, ImplicitAPI):
             request['client_id'] = clientOrderId
         else:
             request['order_id'] = id
-        response = getattr(self, method)(self.extend(request, params))
-        #
-        # responds with an empty body
-        #
-        return response
+        return getattr(self, method)(self.extend(request, params))
 
     def cancel_all_orders(self, symbol: Optional[str] = None, params={}):
         """
@@ -1531,13 +1541,7 @@ class bitpanda(Exchange, ImplicitAPI):
         if symbol is not None:
             market = self.market(symbol)
             request['instrument_code'] = market['id']
-        response = self.privateDeleteAccountOrders(self.extend(request, params))
-        #
-        #     [
-        #         "a10e9bd1-8f72-4cfe-9f1b-7f1c8a9bd8ee"
-        #     ]
-        #
-        return response
+        return self.privateDeleteAccountOrders(self.extend(request, params))
 
     def cancel_orders(self, ids, symbol: Optional[str] = None, params={}):
         """
@@ -1551,13 +1555,7 @@ class bitpanda(Exchange, ImplicitAPI):
         request = {
             'ids': ','.join(ids),
         }
-        response = self.privateDeleteAccountOrders(self.extend(request, params))
-        #
-        #     [
-        #         "a10e9bd1-8f72-4cfe-9f1b-7f1c8a9bd8ee"
-        #     ]
-        #
-        return response
+        return self.privateDeleteAccountOrders(self.extend(request, params))
 
     def fetch_order(self, id: str, symbol: Optional[str] = None, params={}):
         """
@@ -1641,7 +1639,9 @@ class bitpanda(Exchange, ImplicitAPI):
         if since is not None:
             to = self.safe_string(params, 'to')
             if to is None:
-                raise ArgumentsRequired(self.id + ' fetchOpenOrders() requires a "to" iso8601 string param with the since argument is specified, max range is 100 days')
+                raise ArgumentsRequired(
+                    f'{self.id} fetchOpenOrders() requires a "to" iso8601 string param with the since argument is specified, max range is 100 days'
+                )
             request['from'] = self.iso8601(since)
         if limit is not None:
             request['max_page_size'] = limit
@@ -1792,9 +1792,7 @@ class bitpanda(Exchange, ImplicitAPI):
         #     }
         #
         tradeHistory = self.safe_value(response, 'trade_history', [])
-        market = None
-        if symbol is not None:
-            market = self.market(symbol)
+        market = self.market(symbol) if symbol is not None else None
         return self.parse_trades(tradeHistory, market, since, limit)
 
     def fetch_my_trades(self, symbol: Optional[str] = None, since: Optional[int] = None, limit: Optional[int] = None, params={}):
@@ -1821,7 +1819,9 @@ class bitpanda(Exchange, ImplicitAPI):
         if since is not None:
             to = self.safe_string(params, 'to')
             if to is None:
-                raise ArgumentsRequired(self.id + ' fetchMyTrades() requires a "to" iso8601 string param with the since argument is specified, max range is 100 days')
+                raise ArgumentsRequired(
+                    f'{self.id} fetchMyTrades() requires a "to" iso8601 string param with the since argument is specified, max range is 100 days'
+                )
             request['from'] = self.iso8601(since)
         if limit is not None:
             request['max_page_size'] = limit
@@ -1864,19 +1864,18 @@ class bitpanda(Exchange, ImplicitAPI):
         query = self.omit(params, self.extract_params(path))
         if api == 'public':
             if query:
-                url += '?' + self.urlencode(query)
+                url += f'?{self.urlencode(query)}'
         elif api == 'private':
             self.check_required_credentials()
             headers = {
                 'Accept': 'application/json',
-                'Authorization': 'Bearer ' + self.apiKey,
+                'Authorization': f'Bearer {self.apiKey}',
             }
             if method == 'POST':
                 body = self.json(query)
                 headers['Content-Type'] = 'application/json'
-            else:
-                if query:
-                    url += '?' + self.urlencode(query)
+            elif query:
+                url += f'?{self.urlencode(query)}'
         return {'url': url, 'method': method, 'body': body, 'headers': headers}
 
     def handle_errors(self, code, reason, url, method, headers, body, response, requestHeaders, requestBody):
@@ -1889,7 +1888,7 @@ class bitpanda(Exchange, ImplicitAPI):
         #
         message = self.safe_string(response, 'error')
         if message is not None:
-            feedback = self.id + ' ' + body
+            feedback = f'{self.id} {body}'
             self.throw_exactly_matched_exception(self.exceptions['exact'], message, feedback)
             self.throw_broadly_matched_exception(self.exceptions['broad'], message, feedback)
             raise ExchangeError(feedback)  # unknown message

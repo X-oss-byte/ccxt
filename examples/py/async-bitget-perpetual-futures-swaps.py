@@ -5,7 +5,7 @@ import sys
 from asyncio import run
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 
 import ccxt.async_support as ccxt
@@ -49,7 +49,7 @@ async def main():
         print(order)
 
     except Exception as e:
-        print(type(e).__name__, str(e))
+        print(type(e).__name__, e)
 
     await exchange.close()
 

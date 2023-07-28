@@ -32,4 +32,4 @@ try:
     orders = exchange.fetch_open_orders(symbol, since, limit, params)
     pprint(orders)
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)

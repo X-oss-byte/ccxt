@@ -8,7 +8,7 @@ import sys
 
 this_folder = os.path.dirname(os.path.abspath(__file__))
 root_folder = os.path.dirname(os.path.dirname(this_folder))
-sys.path.append(root_folder + '/python')
+sys.path.append(f'{root_folder}/python')
 sys.path.append(this_folder)
 
 # -----------------------------------------------------------------------------
@@ -24,7 +24,7 @@ print('CCXT Version:', ccxt.__version__)
 def table(values):
     first = values[0]
     keys = list(first.keys()) if isinstance(first, dict) else range(0, len(first))
-    widths = [max([len(str(v[k])) for v in values]) for k in keys]
+    widths = [max(len(str(v[k])) for v in values) for k in keys]
     string = ' | '.join(['{:<' + str(w) + '}' for w in widths])
     return "\n".join([string.format(*[str(v[k]) for k in keys]) for v in values])
 
@@ -44,7 +44,7 @@ try:
     }
     # https://binance-docs.github.io/apidocs/futures/en/#continuous-contract-kline-candlestick-data
     ohlcvs = exchange.fapiPublic_get_continuousklines(params)
-    print(table([o for o in ohlcvs]))
+    print(table(list(ohlcvs)))
     print(table([[exchange.iso8601(int(o[0]))] + o[1:] for o in ohlcvs]))
 except Exception as e:
-    print(type(e).__name__, str(e))
+    print(type(e).__name__, e)

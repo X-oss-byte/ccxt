@@ -55,7 +55,7 @@ master_doc = 'index'
 # General information about the project.
 project = package['name']
 author = package['author']['name']
-copyright = str(datetime.now().year) + ' CCXT'
+copyright = f'{str(datetime.now().year)} CCXT'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -5,7 +5,7 @@ import sys
 from pprint import pprint
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -39,7 +39,7 @@ def main():
     results = []
     num_iterations = 50
 
-    for i in range(0, num_iterations):
+    for _ in range(0, num_iterations):
         started = exchange.milliseconds()
         orderbook = exchange.fetch_order_book(symbol)
         ended = exchange.milliseconds()

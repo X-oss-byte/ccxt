@@ -7,7 +7,7 @@ import csv
 # -----------------------------------------------------------------------------
 
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(root + '/python')
+sys.path.append(f'{root}/python')
 
 import ccxt  # noqa: E402
 
@@ -18,9 +18,7 @@ def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
     num_retries = 0
     try:
         num_retries += 1
-        ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit)
-        # print('Fetched', len(ohlcv), symbol, 'candles from', exchange.iso8601 (ohlcv[0][0]), 'to', exchange.iso8601 (ohlcv[-1][0]))
-        return ohlcv
+        return exchange.fetch_ohlcv(symbol, timeframe, since, limit)
     except Exception:
         if num_retries > max_retries:
             raise  # Exception('Failed to fetch', timeframe, symbol, 'OHLCV in', max_retries, 'attempts')
