@@ -19,7 +19,7 @@
     "start": "node ./build/index"
   },
   "dependencies": {
-    "ansicolor": "^1.1.92",
+    "ansicolor": "^1.1.100",
     "as-table": "^1.0.55",
     "ccxt": "^2.0.0",
     "ololog": "^1.1.146"
